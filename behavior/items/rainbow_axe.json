@@ -1,0 +1,37 @@
+{
+	"format_version": "1.26.50",
+	"minecraft:item": {
+		"description": {
+			"identifier": "rainbow_magic:rainbow_axe",
+			"menu_category": {
+				"category": "equipment"
+			}
+		},
+		"components": {
+			"minecraft:icon": "rainbow_axe",
+			"minecraft:display_name": {
+				"value": "Rainbow Axe"
+			},
+			"minecraft:max_stack_size": 1,
+			"minecraft:hand_equipped": true,
+			"minecraft:tags": {
+				"tags": [
+					"minecraft:is_tool",
+					"minecraft:is_axe",
+					"minecraft:diamond_tier"
+				]
+			},
+			"minecraft:digger": {
+				"use_efficiency": true,
+				"destroy_speeds": [
+					{
+						"block": {
+							"tags": "q.any_tag('minecraft:is_axe_item_destructible')"
+						},
+						"speed": 20
+					}
+				]
+			}
+		}
+	}
+}

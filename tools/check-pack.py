@@ -146,6 +146,18 @@ def texture_exists(reference: str) -> bool:
     return os.path.isfile(os.path.join(RESOURCES, reference + ".png"))
 
 
+# Assets the vanilla pack supplies; not this pack's to ship.
+VANILLA_ASSETS = {"textures/misc/enchanted_actor_glint"}
+
+ARMOR_SLOTS = {
+    "slot.armor.body",
+    "slot.armor.chest",
+    "slot.armor.feet",
+    "slot.armor.head",
+    "slot.armor.legs",
+}
+
+
 for key, entry in item_textures.items():
     if not texture_exists(entry["textures"]):
         complain(f"item_texture.json: {key} points at a missing {entry['textures']}.png")
@@ -365,6 +377,39 @@ for identifier, (path, client) in client_entities.items():
                 f"query.head_y_rotation -- accepted only on vanilla horse types, so it errors every "
                 f"frame on a custom entity"
             )
+
+# --------------------------------------------------------------------------- #
+# armor: every wearable in an armor slot needs an attachable, or it is invisible
+# --------------------------------------------------------------------------- #
+
+attachables = {}
+for path, document in each_json(os.path.join(RESOURCES, "attachables")):
+    description = document["minecraft:attachable"]["description"]
+    attachables[description["identifier"]] = (path, description)
+
+for identifier, path in items.items():
+    wearable = load(path)["minecraft:item"]["components"].get("minecraft:wearable")
+    if not wearable:
+        continue
+    slot = wearable.get("slot")
+    if slot not in ARMOR_SLOTS:
+        complain(f"{relative(path)}: minecraft:wearable slot '{slot}' is not one of {sorted(ARMOR_SLOTS)}")
+    if identifier not in attachables:
+        complain(
+            f"{relative(path)}: wearable in {slot} with no attachable declaring '{identifier}' -- "
+            f"the piece is wearable but invisible on the player"
+        )
+
+for identifier, (path, description) in attachables.items():
+    if identifier not in items:
+        complain(f"{relative(path)}: attachable '{identifier}' has no item in this pack")
+    for name, reference in description["textures"].items():
+        if reference in VANILLA_ASSETS:
+            continue
+        if not texture_exists(reference):
+            complain(f"{relative(path)}: texture '{name}' points at a missing {reference}.png")
+    if not description.get("render_controllers"):
+        complain(f"{relative(path)}: no render_controllers, so nothing renders")
 
 SCRIPT = os.path.join(BEHAVIOR, "scripts", "main.js")
 script = open(SCRIPT, encoding="utf-8").read()

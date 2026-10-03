@@ -24,7 +24,7 @@ import {
  * Reported in the boot line, so the content log says which build is installed.
  * Bump it on every change that alters behaviour.
  */
-const BUILD = "1.0.7";
+const BUILD = "1.0.8";
 
 const TAG = "[RainbowMagic]";
 
@@ -420,7 +420,26 @@ function shearTarget(player, target) {
 	log(`sheared ${target.typeId} -> ${drop.item}`);
 }
 
+/** How many entity interactions to report. The shears path depends on the engine
+ * raising this event at all with a custom item in hand, which is not something a
+ * data file can express -- so the first few say whether it fires and what the
+ * engine thinks is held. */
+const INTERACTION_LOGS = 3;
+
+let interactionsLogged = 0;
+
 subscribe("playerInteractWithEntity", world?.afterEvents?.playerInteractWithEntity, (event) => {
+	if (interactionsLogged < INTERACTION_LOGS) {
+		interactionsLogged += 1;
+		let held = "nothing";
+		try {
+			held = heldItem(event.player)?.typeId ?? held;
+		} catch (err) {
+			// left as nothing
+		}
+		log(`interacted with ${event.target?.typeId}, holding ${held}`);
+	}
+
 	if (heldItem(event.player)?.typeId !== SHEARS) {
 		return;
 	}

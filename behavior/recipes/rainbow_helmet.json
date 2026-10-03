@@ -1,0 +1,28 @@
+{
+	"format_version": "1.20.10",
+	"minecraft:recipe_shaped": {
+		"description": {
+			"identifier": "rainbow_magic:rainbow_helmet"
+		},
+		"tags": [
+			"crafting_table"
+		],
+		"pattern": [
+			"III",
+			"I I"
+		],
+		"key": {
+			"I": {
+				"item": "rainbow_magic:rainbow_ingot"
+			}
+		},
+		"result": {
+			"item": "rainbow_magic:rainbow_helmet"
+		},
+		"unlock": [
+			{
+				"item": "rainbow_magic:rainbow_ingot"
+			}
+		]
+	}
+}

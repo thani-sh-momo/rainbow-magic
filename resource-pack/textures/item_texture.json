@@ -5,20 +5,41 @@
 		"glitter_unicorn_spawn_egg": {
 			"textures": "textures/items/glitter_unicorn_spawn_egg"
 		},
+		"rainbow_axe": {
+			"textures": "textures/items/rainbow_axe"
+		},
 		"rainbow_blade": {
 			"textures": "textures/items/rainbow_blade"
+		},
+		"rainbow_boots": {
+			"textures": "textures/items/rainbow_boots"
+		},
+		"rainbow_chestplate": {
+			"textures": "textures/items/rainbow_chestplate"
 		},
 		"rainbow_dust": {
 			"textures": "textures/items/rainbow_dust"
 		},
+		"rainbow_helmet": {
+			"textures": "textures/items/rainbow_helmet"
+		},
+		"rainbow_hoe": {
+			"textures": "textures/items/rainbow_hoe"
+		},
 		"rainbow_ingot": {
 			"textures": "textures/items/rainbow_ingot"
+		},
+		"rainbow_leggings": {
+			"textures": "textures/items/rainbow_leggings"
 		},
 		"rainbow_pickaxe": {
 			"textures": "textures/items/rainbow_pickaxe"
 		},
 		"rainbow_shears": {
 			"textures": "textures/items/rainbow_shears"
+		},
+		"rainbow_shovel": {
+			"textures": "textures/items/rainbow_shovel"
 		},
 		"trap_inferno": {
 			"textures": "textures/items/trap_inferno"

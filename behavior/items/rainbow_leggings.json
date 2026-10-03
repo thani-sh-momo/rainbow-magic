@@ -2,22 +2,25 @@
 	"format_version": "1.26.50",
 	"minecraft:item": {
 		"description": {
-			"identifier": "rainbow_magic:rainbow_shears",
+			"identifier": "rainbow_magic:rainbow_leggings",
 			"menu_category": {
 				"category": "equipment"
 			}
 		},
 		"components": {
-			"minecraft:icon": "rainbow_shears",
+			"minecraft:icon": "rainbow_leggings",
 			"minecraft:display_name": {
-				"value": "Rainbow Shears"
+				"value": "Rainbow Leggings"
 			},
 			"minecraft:max_stack_size": 1,
-			"minecraft:hand_equipped": true,
+			"minecraft:wearable": {
+				"slot": "slot.armor.legs",
+				"protection": 6
+			},
 			"minecraft:tags": {
 				"tags": [
-					"minecraft:is_tool",
-					"minecraft:is_shears"
+					"minecraft:is_armor",
+					"minecraft:diamond_tier"
 				]
 			}
 		}

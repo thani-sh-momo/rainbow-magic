@@ -1,0 +1,29 @@
+{
+	"format_version": "1.20.10",
+	"minecraft:recipe_shaped": {
+		"description": {
+			"identifier": "rainbow_magic:rainbow_leggings"
+		},
+		"tags": [
+			"crafting_table"
+		],
+		"pattern": [
+			"III",
+			"I I",
+			"I I"
+		],
+		"key": {
+			"I": {
+				"item": "rainbow_magic:rainbow_ingot"
+			}
+		},
+		"result": {
+			"item": "rainbow_magic:rainbow_leggings"
+		},
+		"unlock": [
+			{
+				"item": "rainbow_magic:rainbow_ingot"
+			}
+		]
+	}
+}

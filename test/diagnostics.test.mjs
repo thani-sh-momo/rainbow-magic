@@ -12,10 +12,13 @@ import { describe, test } from "node:test";
 
 import {
 	RAINBOW_PICKAXE,
+	RAINBOW_SHEARS,
 	TRAP_SNARE,
 	capture,
+	entity,
 	holding,
 	interactWithBlock,
+	interactWithEntity,
 	item,
 	loadAddon,
 	raiseBreak,
@@ -201,6 +204,44 @@ describe("the pickaxe break report", () => {
 		});
 
 		assert.equal(lines.filter((line) => line.includes("the engine broke")).length, 3);
+	});
+});
+
+describe("the interaction report", () => {
+	test("it reports the entity and what is held", async () => {
+		await loadAddon();
+
+		const lines = capture(() => {
+			interactWithEntity(holding(RAINBOW_SHEARS), entity({ typeId: "minecraft:sheep" }));
+		});
+
+		assert.ok(
+			logged(lines, "interacted with minecraft:sheep, holding rainbow_magic:rainbow_shears"),
+			`expected an interaction report, got: ${lines.join("\n")}`,
+		);
+	});
+
+	test("it names an item the engine reports instead of the shears", async () => {
+		await loadAddon();
+
+		const lines = capture(() => {
+			interactWithEntity(holding("minecraft:stick"), entity({ typeId: "minecraft:sheep" }));
+		});
+
+		assert.ok(logged(lines, "holding minecraft:stick"), lines.join("\n"));
+	});
+
+	test("it stops after a few", async () => {
+		await loadAddon();
+		const player = holding(RAINBOW_SHEARS);
+
+		const lines = capture(() => {
+			for (let i = 0; i < 6; i += 1) {
+				interactWithEntity(player, entity({ typeId: "minecraft:sheep" }));
+			}
+		});
+
+		assert.equal(lines.filter((line) => line.includes("interacted with")).length, 3);
 	});
 });
 

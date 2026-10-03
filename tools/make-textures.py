@@ -21,6 +21,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ITEMS = os.path.join(ROOT, "resource-pack", "textures", "items")
 BLOCKS = os.path.join(ROOT, "resource-pack", "textures", "blocks")
 ENTITY = os.path.join(ROOT, "resource-pack", "textures", "entity", "rainbow_magic")
+ARMOR = os.path.join(ROOT, "resource-pack", "textures", "models", "armor")
 DOCS = os.path.join(ROOT, "docs")
 
 TRANSPARENT = (0, 0, 0, 0)
@@ -325,6 +326,46 @@ def sprite_spawn_egg() -> Canvas:
 
 
 # --------------------------------------------------------------------------- #
+# placeholders
+#
+# The axe, shovel, hoe and the four armour pieces carry stand-in art: the real
+# icons are a separate design pass, and these only need to exist (an item with no
+# texture is the missing-texture placeholder) and be told apart in the inventory.
+# --------------------------------------------------------------------------- #
+
+def sprite_placeholder_tool(hue: float) -> Canvas:
+    canvas = Canvas(16)
+    canvas.thick_line(4, 13, 10, 5, 3, lambda t: (96, 64, 40, 255))
+    canvas.rect(8, 2, 6, 4, rainbow(hue))
+    canvas.rect(8, 2, 6, 1, hsv(hue * 0.83, 0.25, 1.0))
+    canvas.rect(8, 5, 6, 1, OUTLINE)
+    return canvas
+
+
+def sprite_placeholder_armor(hue: float) -> Canvas:
+    canvas = Canvas(16)
+    canvas.rect(3, 3, 10, 9, rainbow(hue))
+    canvas.rect(3, 3, 10, 2, hsv(hue * 0.83, 0.25, 1.0))
+    canvas.rect(6, 2, 4, 1, rainbow(hue, 0.8, 0.8))
+    for x in range(3, 13):
+        canvas.set(x, 12, OUTLINE)
+    return canvas
+
+
+def sprite_armor_layer(seed: int) -> Canvas:
+    """The 64x32 texture the humanoid armour geometry samples for its UV islands:
+    a rainbow wash, so a piece reads as rainbow without painting every island."""
+    canvas = Canvas(64, 32)
+    for y in range(32):
+        for x in range(64):
+            canvas.set(x, y, rainbow((x / 64.0) * 0.5 + (y / 32.0) * 0.35))
+    rng = random.Random(seed)
+    for _ in range(60):
+        canvas.set(rng.randrange(64), rng.randrange(32), (255, 255, 255, 235))
+    return canvas
+
+
+# --------------------------------------------------------------------------- #
 # blocks
 # --------------------------------------------------------------------------- #
 
@@ -454,6 +495,13 @@ def main() -> None:
         "rainbow_blade": sprite_rainbow_blade(),
         "rainbow_pickaxe": sprite_rainbow_pickaxe(),
         "rainbow_shears": sprite_rainbow_shears(),
+        "rainbow_axe": sprite_placeholder_tool(0.62),
+        "rainbow_shovel": sprite_placeholder_tool(0.42),
+        "rainbow_hoe": sprite_placeholder_tool(0.82),
+        "rainbow_helmet": sprite_placeholder_armor(0.05),
+        "rainbow_chestplate": sprite_placeholder_armor(0.35),
+        "rainbow_leggings": sprite_placeholder_armor(0.62),
+        "rainbow_boots": sprite_placeholder_armor(0.88),
         "trap_snare": sprite_trap_snare(),
         "trap_inferno": sprite_trap_inferno(),
         "trap_levity": sprite_trap_levity(),
@@ -465,6 +513,7 @@ def main() -> None:
         "rainbow_block": sprite_rainbow_block(),
     }
     entity = {"glitter_unicorn": sprite_unicorn()}
+    armor_layers = {"rainbow_1": sprite_armor_layer(3), "rainbow_2": sprite_armor_layer(9)}
 
     written = []
     for name, sprite in items.items():
@@ -477,6 +526,10 @@ def main() -> None:
         written.append(path)
     for name, sprite in entity.items():
         path = os.path.join(ENTITY, f"{name}.png")
+        write_png(path, sprite)
+        written.append(path)
+    for name, sprite in armor_layers.items():
+        path = os.path.join(ARMOR, f"{name}.png")
         write_png(path, sprite)
         written.append(path)
 
@@ -492,6 +545,7 @@ def main() -> None:
         [(name, sprite, 8) for name, sprite in items.items()]
         + [(name, sprite, 8) for name, sprite in blocks.items()]
         + [(name, sprite, 2) for name, sprite in entity.items()]
+        + [(name, sprite, 4) for name, sprite in armor_layers.items()]
     )
 
     for path in written:

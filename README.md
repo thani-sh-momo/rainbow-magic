@@ -21,9 +21,16 @@ wears, not a picture of the animal.*
 | **Rainbow Dust** → **Rainbow Ingot** | Smelt dust in a furnace. Everything else is made from ingots. |
 | **Rainbow Blade** | **100 attack damage** and it never breaks. |
 | **Rainbow Pickaxe** | Mines everything, **including bedrock**, and never breaks. |
-| **Supershears** | Shear **any** mob in the game, not just sheep. |
+| **Rainbow Axe** / **Shovel** / **Hoe** | The rest of the tool set, matching vanilla shapes, and none of them break. |
+| **Rainbow Shears** | Shear **any** mob in the game, not just sheep. |
+| **Rainbow Armour** | Helmet, chestplate, leggings and boots: diamond-grade protection and never breaks. |
 | **Magical Traps** ×3 | Consumable traps that arm the ground you are standing on and fire at the first mob to walk onto it. |
 | **Rainbow Glitter Unicorn** | A kind, glowing pet. Feed it a Rainbow Ingot to tame it. |
+
+> **The seven newest icons are placeholders.** The axe, shovel, hoe and the four
+> armour pieces use stand-in art that only needs to be present and tell them apart
+> in the inventory — the real icons are a separate design pass. Everything else in
+> the pack is drawn properly.
 
 ## How it works
 
@@ -118,7 +125,14 @@ shear it too.
 | 9 Rainbow Ingots | 1 Rainbow Block, anywhere in the grid |
 | Rainbow Blade | Ingot over ingot over stick (a sword shape) |
 | Rainbow Pickaxe | 3 ingots across, stick, stick (a pickaxe shape) |
-| Supershears | 2 ingots diagonally (a shears shape) |
+| Rainbow Axe | 2 ingots over ingot+stick over stick (an axe shape) |
+| Rainbow Shovel | Ingot over stick over stick (a shovel shape) |
+| Rainbow Hoe | 2 ingots over stick over stick (a hoe shape) |
+| Rainbow Shears | 2 ingots diagonally (a shears shape) |
+| Rainbow Helmet | 5 ingots in an arch |
+| Rainbow Chestplate | 8 ingots (a chestplate shape) |
+| Rainbow Leggings | 7 ingots (a leggings shape) |
+| Rainbow Boots | 4 ingots, two and two |
 | Unicorn Spawn Egg | 1 Rainbow Block + 1 Golden Apple + 4 Rainbow Dust |
 
 Ore generates from **y −60 to y 60**, in veins of up to 6, eight attempts per
@@ -165,7 +179,7 @@ clear version error rather than loading a pickaxe that cannot mine.
 
    ```json
    [
-     { "pack_id": "bc2a68d1-58da-4029-b56d-82538d854be0", "version": [1, 0, 7] }
+     { "pack_id": "bc2a68d1-58da-4029-b56d-82538d854be0", "version": [1, 0, 8] }
    ]
    ```
 
@@ -208,7 +222,7 @@ Run and passing here:
 
 - **All scripted behaviour** — the pickaxe on every block on its list, the
   shears on named and unnamed mobs, cooldowns, trap arming, spending and firing,
-  and the unicorn's spawn effects (53 tests).
+  and the unicorn's spawn effects (59 tests).
 - **Every data cross-reference** — manifests, uuids, textures, recipes, loot
   tables, features and the entity's client definition.
 - **The archives** — built and checked for a `manifest.json` at the root.
@@ -230,8 +244,16 @@ reverting them one at a time.
 | Reading vanilla's own `diamond_spear.json` | `minecraft:damage` was a bare number where vanilla writes an object | `minecraft:damage` must be `{"value": <int>}` |
 | Play-testing | `animation.horse.v3.look_at_player` spammed the log: `query.head_y_rotation` is accepted only on vanilla horse-family types | a custom entity must not reference that animation |
 | Play-testing | The pickaxe broke blocks but **harvested nothing**: the item declared `minecraft:is_pickaxe` and `minecraft:diamond_tier` but not `minecraft:is_tool`, so the engine never treated it as a tool | an item with a `minecraft:digger` must declare `minecraft:is_tool`; a block's `minecraft:tags` must be an array, not the item's object form |
+| Play-testing | Armour would have been **wearable but invisible**: a `minecraft:wearable` item needs an attachable in the resource pack | every wearable in an armour slot must have an attachable declaring it, with a real texture and a render controller |
 
 **Still not verified**, because the engine owns these — worth a look in play:
+
+- **Whether the engine raises `playerInteractWithEntity` at all with a custom item in hand.**
+  The shears now carry `minecraft:is_shears` and `minecraft:is_tool`, so the engine should shear
+  sheep, mooshrooms and snow golems natively; the script extends that to every other mob. If
+  shearing still does nothing, the log's first three entity interactions say whether the event
+  fires, and what the engine believes is in your hand — that distinguishes "the item is not
+  recognised" from "the event never arrives", which is the one thing a data file cannot tell us.
 
 - `minecraft:damage: 100` on the blade (does 100 damage land as intended, or does
   the engine clamp it?),
@@ -262,7 +284,7 @@ load. Everything below is one line in the content log per stage.
 Then look for lines starting `[RainbowMagic]`. A healthy load looks like this:
 
 ```text
-[RainbowMagic] build 1.0.7: script module loaded
+[RainbowMagic] build 1.0.8: script module loaded
 [RainbowMagic] afterEvents: entityHitBlock=ok entitySpawn=ok itemUse=ok ...
 [RainbowMagic] currentTick=0
 [RainbowMagic] overworld=minecraft:overworld
@@ -333,7 +355,7 @@ installing one at a time says which pack is unhappy.
 
 **Versions.** A world records a pack's uuid **and version**; an unchanged version
 after a rebuild can leave the world using the copy it already has, so the
-version in `manifest.json` (this file documents `1.0.7`) is what
+version in `manifest.json` (this file documents `1.0.8`) is what
 `world_behavior_packs.json` and `world_resource_packs.json` must name. Version
 bumps are for content changes only — a documentation change does not need one,
 and bumping needlessly makes a world's stored reference go stale.
