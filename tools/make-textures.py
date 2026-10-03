@@ -227,18 +227,19 @@ def sprite_rainbow_blade() -> Canvas:
 def sprite_rainbow_pickaxe() -> Canvas:
     canvas = Canvas(16)
     canvas.thick_line(6, 13, 10, 5, 3, lambda t: (96, 64, 40, 255))
-    # The head: a shallow arc across the top, dropping at both ends into spikes.
+    # A flat bar across the top with two down-swept tips: the profile is what
+    # makes it a pick rather than a dome on a stick.
     for step in range(41):
         t = step / 40
-        x = 2 + 12 * t
-        y = 3 + 3.2 * (abs(t - 0.5) * 2) ** 2
+        x = 2 + 11 * t
+        y = 3 + 1.6 * (abs(t - 0.5) * 2) ** 2
         canvas.set(round(x), round(y), rainbow(t))
         canvas.set(round(x), round(y) + 1, rainbow(t, 0.9, 0.75))
-        canvas.set(round(x), round(y) - 1, hsv(t * 0.83, 0.3, 1.0))
-    for x in range(2, 5):
-        canvas.set(x, 6, OUTLINE)
-    for x in range(12, 15):
-        canvas.set(x, 6, OUTLINE)
+    for i in range(4):
+        canvas.set(2 + i, 4 + i, rainbow(0.02, 0.9, 0.95))
+        canvas.set(13 - i, 4 + i, rainbow(0.52, 0.9, 0.95))
+    canvas.set(2, 3, OUTLINE)
+    canvas.set(13, 3, OUTLINE)
     return canvas
 
 
@@ -248,8 +249,8 @@ def sprite_rainbow_shears() -> Canvas:
     def metal(t):
         return hsv(0.5 + t * 0.35, 0.35, 1.0)
 
-    canvas.thick_line(3, 2, 9, 9, 3, metal)
-    canvas.thick_line(13, 2, 7, 9, 3, metal)
+    canvas.thick_line(3, 2, 9, 9, 2, metal)
+    canvas.thick_line(13, 2, 7, 9, 2, metal)
     canvas.set(8, 9, OUTLINE)
     canvas.set(8, 10, (60, 60, 70, 255))
     canvas.thick_line(7, 10, 4, 13, 2, lambda t: rainbow(0.05 + t * 0.2))
@@ -284,15 +285,15 @@ def sprite_trap_snare() -> Canvas:
 def sprite_trap_inferno() -> Canvas:
     canvas = Canvas(16)
     trap_base(canvas, 0.02)
-    # A narrow flame with two tongues, so it cannot be read as a mushroom.
-    for y in range(4, 13):
-        t = (y - 4) / 8.0
-        half = 2.7 * (0.4 + t * 0.6)
+    # A broad flame with side tongues, filling most of the ring's interior.
+    for y in range(3, 13):
+        t = (y - 3) / 9.0
+        half = 3.4 * (0.45 + t * 0.55)
         for x in range(8 - int(half), 8 + int(half) + 1):
             canvas.set(x, y, rainbow(0.0 + 0.09 * (1 - t), 0.95, 1.0))
-    canvas.line(8, 11, 6, 6, (255, 236, 150, 255))
-    canvas.line(8, 11, 10, 7, (255, 236, 150, 255))
-    for y in range(8, 13):
+    canvas.line(8, 11, 5, 6, (255, 236, 150, 255))
+    canvas.line(8, 11, 11, 7, (255, 236, 150, 255))
+    for y in range(7, 13):
         canvas.rect(7, y, 2, 1, (255, 250, 220, 255))
     return canvas
 
@@ -337,10 +338,12 @@ def ore_sprite(base_dark, base_light, seed: int) -> Canvas:
                 int(base_dark[i] + (base_light[i] - base_dark[i]) * blend) for i in range(3)
             ) + (255,)
             canvas.set(x, y, shade)
-    for x, y, hue in [(3, 4, 0.0), (9, 3, 0.3), (4, 10, 0.55), (11, 9, 0.75), (8, 12, 0.9)]:
-        canvas.rect(x, y, 2, 2, rainbow(hue))
-        canvas.set(x, y, hsv(hue * 0.83, 0.2, 1.0))
-        canvas.set(x + 1, y + 1, hsv(hue * 0.83, 0.95, 0.6))
+    # Gem clusters, not dust: vanilla ore is legible because its specks are big
+    # enough to read as a mineral at 16 pixels.
+    for x, y, hue in [(2, 3, 0.0), (9, 2, 0.28), (3, 9, 0.55), (10, 8, 0.75), (7, 12, 0.9)]:
+        canvas.rect(x, y, 3, 3, rainbow(hue, 0.85, 0.85))
+        canvas.rect(x, y, 2, 1, hsv(hue * 0.83, 0.25, 1.0))
+        canvas.set(x + 2, y + 2, hsv(hue * 0.83, 0.95, 0.55))
     return canvas
 
 

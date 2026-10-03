@@ -8,7 +8,10 @@ broken, and tame the pet that comes with it.
 Everything is crafted from **rainbow ore**, which generates underground in the
 Overworld.
 
-![Every item, block and the unicorn texture in this pack](docs/preview.png)
+![Every item, block and trap in this pack, plus the unicorn's texture](docs/preview.png)
+
+*The last cell is the unicorn's texture: a UV atlas the vanilla horse model
+wears, not a picture of the animal.*
 
 ## What is in it
 
@@ -191,11 +194,14 @@ owns. Worth a look on first launch —
 
 - `minecraft:damage: 100` on the blade (does 100 damage land as intended, or does
   the engine clamp it?),
-- the pickaxe's tag-based `minecraft:digger` entry,
+- the pickaxe's tag-based `minecraft:digger` entry — the tag query needs a recent
+  format version, and if the engine ignores it the pickaxe still mines everything
+  and still breaks bedrock, just without the speed boost,
 - rainbow ore actually generating (the feature rule needs no experiments on
   1.21.50+; if nothing generates, that is the first thing to check),
-- the unicorn's model, its taming by Rainbow Ingot, and the particle and sound
-  ids the traps use.
+- the unicorn's model and taming, and whether the crafted spawn egg links to it
+  the way a vanilla egg does (the creative-menu egg is the fallback),
+- the particle and sound ids the traps use.
 
 ## Contributing
 
