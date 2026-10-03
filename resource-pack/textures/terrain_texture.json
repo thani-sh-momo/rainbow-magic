@@ -1,0 +1,17 @@
+{
+	"resource_pack_name": "rainbow_magic",
+	"texture_name": "atlas.terrain",
+	"padding": 8,
+	"num_mip_levels": 4,
+	"texture_data": {
+		"deepslate_rainbow_ore": {
+			"textures": "textures/blocks/deepslate_rainbow_ore"
+		},
+		"rainbow_block": {
+			"textures": "textures/blocks/rainbow_block"
+		},
+		"rainbow_ore": {
+			"textures": "textures/blocks/rainbow_ore"
+		}
+	}
+}

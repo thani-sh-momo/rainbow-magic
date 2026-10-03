@@ -1,0 +1,18 @@
+{
+	"format_version": "1.20.10",
+	"minecraft:recipe_furnace": {
+		"description": {
+			"identifier": "rainbow_magic:rainbow_ingot"
+		},
+		"tags": [
+			"furnace",
+			"blast_furnace"
+		],
+		"input": {
+			"item": "rainbow_magic:rainbow_dust"
+		},
+		"output": {
+			"item": "rainbow_magic:rainbow_ingot"
+		}
+	}
+}

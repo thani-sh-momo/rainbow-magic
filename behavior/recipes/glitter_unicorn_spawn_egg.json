@@ -1,0 +1,34 @@
+{
+	"format_version": "1.20.10",
+	"minecraft:recipe_shapeless": {
+		"description": {
+			"identifier": "rainbow_magic:glitter_unicorn_spawn_egg"
+		},
+		"tags": [
+			"crafting_table"
+		],
+		"ingredients": [
+			{
+				"item": "rainbow_magic:rainbow_block"
+			},
+			{
+				"item": "minecraft:golden_apple"
+			},
+			{
+				"item": "rainbow_magic:rainbow_dust"
+			},
+			{
+				"item": "rainbow_magic:rainbow_dust"
+			},
+			{
+				"item": "rainbow_magic:rainbow_dust"
+			},
+			{
+				"item": "rainbow_magic:rainbow_dust"
+			}
+		],
+		"result": {
+			"item": "rainbow_magic:glitter_unicorn_spawn_egg"
+		}
+	}
+}

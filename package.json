@@ -1,0 +1,14 @@
+{
+	"name": "rainbow-magic",
+	"private": true,
+	"type": "module",
+	"description": "Bedrock add-on: rainbow ore, an unbreakable rainbow blade, a bedrock-breaking pickaxe, supershears, magical traps and a tameable Rainbow Glitter Unicorn",
+	"scripts": {
+		"test": "node --import ./test/loader.mjs --test \"test/*.test.mjs\"",
+		"textures": "python3 tools/make-textures.py",
+		"build": "python3 tools/build-addon.py"
+	},
+	"engines": {
+		"node": ">=22"
+	}
+}

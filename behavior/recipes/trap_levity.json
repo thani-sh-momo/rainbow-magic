@@ -1,0 +1,32 @@
+{
+	"format_version": "1.20.10",
+	"minecraft:recipe_shapeless": {
+		"description": {
+			"identifier": "rainbow_magic:trap_levity"
+		},
+		"tags": [
+			"crafting_table"
+		],
+		"ingredients": [
+			{
+				"item": "rainbow_magic:rainbow_ingot"
+			},
+			{
+				"item": "minecraft:feather"
+			},
+			{
+				"item": "minecraft:feather"
+			},
+			{
+				"item": "minecraft:feather"
+			},
+			{
+				"item": "minecraft:feather"
+			}
+		],
+		"result": {
+			"item": "rainbow_magic:trap_levity",
+			"count": 2
+		}
+	}
+}

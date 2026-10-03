@@ -1,0 +1,33 @@
+{
+	"resource_pack_name": "rainbow_magic",
+	"texture_name": "atlas.items",
+	"texture_data": {
+		"glitter_unicorn_spawn_egg": {
+			"textures": "textures/items/glitter_unicorn_spawn_egg"
+		},
+		"rainbow_blade": {
+			"textures": "textures/items/rainbow_blade"
+		},
+		"rainbow_dust": {
+			"textures": "textures/items/rainbow_dust"
+		},
+		"rainbow_ingot": {
+			"textures": "textures/items/rainbow_ingot"
+		},
+		"rainbow_pickaxe": {
+			"textures": "textures/items/rainbow_pickaxe"
+		},
+		"rainbow_shears": {
+			"textures": "textures/items/rainbow_shears"
+		},
+		"trap_inferno": {
+			"textures": "textures/items/trap_inferno"
+		},
+		"trap_levity": {
+			"textures": "textures/items/trap_levity"
+		},
+		"trap_snare": {
+			"textures": "textures/items/trap_snare"
+		}
+	}
+}

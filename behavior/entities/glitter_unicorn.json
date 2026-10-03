@@ -1,0 +1,147 @@
+{
+	"format_version": "1.21.50",
+	"minecraft:entity": {
+		"description": {
+			"identifier": "rainbow_magic:glitter_unicorn",
+			"is_spawnable": true,
+			"is_summonable": true
+		},
+		"component_groups": {
+			"rainbow_magic:tameable": {
+				"minecraft:tameable": {
+					"probability": 1.0,
+					"tame_items": [
+						"rainbow_magic:rainbow_ingot"
+					],
+					"tame_event": {
+						"event": "rainbow_magic:on_tame",
+						"target": "self"
+					}
+				}
+			},
+			"rainbow_magic:tamed": {
+				"minecraft:is_tamed": {},
+				"minecraft:health": {
+					"value": 40,
+					"max": 40
+				},
+				"minecraft:behavior.follow_owner": {
+					"priority": 4,
+					"speed_multiplier": 1.0,
+					"start_distance": 6,
+					"stop_distance": 3
+				}
+			}
+		},
+		"components": {
+			"minecraft:type_family": {
+				"family": [
+					"glitter_unicorn",
+					"horse",
+					"animal",
+					"mob"
+				]
+			},
+			"minecraft:health": {
+				"value": 30,
+				"max": 30
+			},
+			"minecraft:movement": {
+				"value": 0.32
+			},
+			"minecraft:movement.basic": {},
+			"minecraft:navigation.walk": {
+				"can_path_over_water": true,
+				"avoid_water": false
+			},
+			"minecraft:jump.static": {},
+			"minecraft:can_climb": {},
+			"minecraft:physics": {},
+			"minecraft:pushable": {
+				"is_pushable": true,
+				"is_pushable_by_piston": true
+			},
+			"minecraft:collision_box": {
+				"width": 1.4,
+				"height": 1.6
+			},
+			"minecraft:scale": {
+				"value": 1.0
+			},
+			"minecraft:breathable": {
+				"total_supply": 15,
+				"suffocate_time": 0
+			},
+			"minecraft:nameable": {},
+			"minecraft:loot": {
+				"table": "loot_tables/entities/glitter_unicorn.json"
+			},
+			"minecraft:behavior.float": {
+				"priority": 0
+			},
+			"minecraft:behavior.panic": {
+				"priority": 1,
+				"speed_multiplier": 1.2
+			},
+			"minecraft:behavior.tempt": {
+				"priority": 5,
+				"speed_multiplier": 1.0,
+				"within_radius": 12,
+				"items": [
+					"rainbow_magic:rainbow_ingot"
+				]
+			},
+			"minecraft:behavior.avoid_mob_type": {
+				"priority": 6,
+				"entity_types": [
+					{
+						"filters": {
+							"any_of": [
+								{
+									"test": "is_family",
+									"subject": "other",
+									"value": "monster"
+								}
+							]
+						},
+						"max_dist": 12,
+						"walk_speed_multiplier": 1.2,
+						"sprint_speed_multiplier": 1.4
+					}
+				]
+			},
+			"minecraft:behavior.random_stroll": {
+				"priority": 7,
+				"speed_multiplier": 0.6
+			},
+			"minecraft:behavior.look_at_player": {
+				"priority": 8,
+				"look_distance": 8
+			},
+			"minecraft:behavior.random_look_around": {
+				"priority": 9
+			}
+		},
+		"events": {
+			"minecraft:entity_spawned": {
+				"add": {
+					"component_groups": [
+						"rainbow_magic:tameable"
+					]
+				}
+			},
+			"rainbow_magic:on_tame": {
+				"add": {
+					"component_groups": [
+						"rainbow_magic:tamed"
+					]
+				},
+				"remove": {
+					"component_groups": [
+						"rainbow_magic:tameable"
+					]
+				}
+			}
+		}
+	}
+}

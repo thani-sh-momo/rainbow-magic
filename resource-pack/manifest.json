@@ -1,0 +1,36 @@
+{
+	"format_version": 2,
+	"metadata": {
+		"authors": [
+			"MoMo"
+		],
+		"license": "MIT",
+		"url": "https://github.com/thani-sh-momo/rainbow-magic"
+	},
+	"header": {
+		"name": "Rainbow Magic Resources",
+		"description": "Textures for Rainbow Magic",
+		"min_engine_version": [
+			1,
+			21,
+			50
+		],
+		"uuid": "d8c6e08f-adbf-4b82-a242-44aa79e4a376",
+		"version": [
+			1,
+			0,
+			0
+		]
+	},
+	"modules": [
+		{
+			"type": "resources",
+			"uuid": "10014778-8a4d-4cee-8110-4900042bff01",
+			"version": [
+				1,
+				0,
+				0
+			]
+		}
+	]
+}

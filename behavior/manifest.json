@@ -1,0 +1,61 @@
+{
+	"format_version": 2,
+	"metadata": {
+		"authors": [
+			"MoMo"
+		],
+		"license": "MIT",
+		"url": "https://github.com/thani-sh-momo/rainbow-magic"
+	},
+	"header": {
+		"name": "Rainbow Magic",
+		"description": "Rainbow ore, an unbreakable rainbow blade, a pickaxe that mines even bedrock, supershears, magical traps and a tameable Rainbow Glitter Unicorn",
+		"min_engine_version": [
+			1,
+			21,
+			50
+		],
+		"uuid": "bc2a68d1-58da-4029-b56d-82538d854be0",
+		"version": [
+			1,
+			0,
+			0
+		]
+	},
+	"modules": [
+		{
+			"type": "data",
+			"uuid": "98308d01-2f94-499b-99cd-a555566f0ecd",
+			"version": [
+				1,
+				0,
+				0
+			]
+		},
+		{
+			"type": "script",
+			"language": "javascript",
+			"uuid": "ee3d0dcc-bf11-4355-9991-41bff0e886da",
+			"entry": "scripts/main.js",
+			"version": [
+				1,
+				0,
+				0
+			]
+		}
+	],
+	"dependencies": [
+		{
+			"module_name": "@minecraft/server",
+			"version": "1.16.0"
+		},
+		{
+			"uuid": "d8c6e08f-adbf-4b82-a242-44aa79e4a376",
+			"version": [
+				1,
+				0,
+				0
+			]
+		}
+	]
+}

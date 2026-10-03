@@ -1,0 +1,32 @@
+{
+	"format_version": "1.20.10",
+	"minecraft:recipe_shapeless": {
+		"description": {
+			"identifier": "rainbow_magic:trap_snare"
+		},
+		"tags": [
+			"crafting_table"
+		],
+		"ingredients": [
+			{
+				"item": "rainbow_magic:rainbow_ingot"
+			},
+			{
+				"item": "minecraft:string"
+			},
+			{
+				"item": "minecraft:string"
+			},
+			{
+				"item": "minecraft:string"
+			},
+			{
+				"item": "minecraft:string"
+			}
+		],
+		"result": {
+			"item": "rainbow_magic:trap_snare",
+			"count": 2
+		}
+	}
+}

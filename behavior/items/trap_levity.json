@@ -1,0 +1,20 @@
+{
+	"format_version": "1.21.50",
+	"minecraft:item": {
+		"description": {
+			"identifier": "rainbow_magic:trap_levity",
+			"menu_category": {
+				"category": "items"
+			}
+		},
+		"components": {
+			"minecraft:icon": {
+				"texture": "trap_levity"
+			},
+			"minecraft:display_name": {
+				"value": "Magical Trap: Levity"
+			},
+			"minecraft:max_stack_size": 16
+		}
+	}
+}

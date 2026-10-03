@@ -1,0 +1,27 @@
+{
+	"format_version": "1.20.10",
+	"minecraft:recipe_shaped": {
+		"description": {
+			"identifier": "rainbow_magic:rainbow_blade"
+		},
+		"tags": [
+			"crafting_table"
+		],
+		"pattern": [
+			"I",
+			"I",
+			"S"
+		],
+		"key": {
+			"I": {
+				"item": "rainbow_magic:rainbow_ingot"
+			},
+			"S": {
+				"item": "minecraft:stick"
+			}
+		},
+		"result": {
+			"item": "rainbow_magic:rainbow_blade"
+		}
+	}
+}

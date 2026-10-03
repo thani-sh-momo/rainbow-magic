@@ -1,0 +1,27 @@
+{
+	"format_version": "1.13.0",
+	"minecraft:ore_feature": {
+		"description": {
+			"identifier": "rainbow_magic:rainbow_ore_feature"
+		},
+		"count": 6,
+		"replace_rules": [
+			{
+				"places_block": "rainbow_magic:rainbow_ore",
+				"may_replace": [
+					"minecraft:stone",
+					"minecraft:andesite",
+					"minecraft:diorite",
+					"minecraft:granite",
+					"minecraft:tuff"
+				]
+			},
+			{
+				"places_block": "rainbow_magic:deepslate_rainbow_ore",
+				"may_replace": [
+					"minecraft:deepslate"
+				]
+			}
+		]
+	}
+}

@@ -1,0 +1,5 @@
+tile.rainbow_magic:rainbow_ore.name=Rainbow Ore
+tile.rainbow_magic:deepslate_rainbow_ore.name=Deepslate Rainbow Ore
+tile.rainbow_magic:rainbow_block.name=Rainbow Block
+entity.rainbow_magic:glitter_unicorn.name=Rainbow Glitter Unicorn
+item.spawn_egg.entity.rainbow_magic:glitter_unicorn.name=Spawn Rainbow Glitter Unicorn

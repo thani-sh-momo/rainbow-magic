@@ -1,0 +1,20 @@
+{
+	"format_version": "1.21.50",
+	"minecraft:item": {
+		"description": {
+			"identifier": "rainbow_magic:rainbow_dust",
+			"menu_category": {
+				"category": "items"
+			}
+		},
+		"components": {
+			"minecraft:icon": {
+				"texture": "rainbow_dust"
+			},
+			"minecraft:display_name": {
+				"value": "Rainbow Dust"
+			},
+			"minecraft:max_stack_size": 64
+		}
+	}
+}

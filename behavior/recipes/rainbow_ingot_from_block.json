@@ -1,0 +1,20 @@
+{
+	"format_version": "1.20.10",
+	"minecraft:recipe_shapeless": {
+		"description": {
+			"identifier": "rainbow_magic:rainbow_ingot_from_block"
+		},
+		"tags": [
+			"crafting_table"
+		],
+		"ingredients": [
+			{
+				"item": "rainbow_magic:rainbow_block"
+			}
+		],
+		"result": {
+			"item": "rainbow_magic:rainbow_ingot",
+			"count": 9
+		}
+	}
+}
