@@ -210,6 +210,66 @@ watermark.
 Aspect ratio 2:1, image 2048x1024.
 ```
 
+## What the sheets actually produced
+
+`tools/import-art.py --sheets DIR` imports the five-sheet layout. Results, so the
+next pass starts from facts rather than the plan:
+
+**The reduction was exact everywhere, which was the point.** sheet 1 at 2048²
+gave 512-pixel cells at 1/32; sheet 2 gave 1024-pixel cells at 1/64; sheet 4 at
+2048² gave 1/32. Sheets 3 and 5 did **not** come back at the 2:1 they were asked
+for — the interface returned 2912×1440 — so each was centre-cropped to the
+largest whole multiple of its target (2880×1440 for the armour at 1/45;
+1408×1408 per half for the pack icons at 1/11) and then reduced. Nothing was ever
+interpolated; the only cost is a couple of percent off the outside.
+
+**The model drew a text label under every sprite**, which sheet 1 explicitly
+forbade. Each label sits in a 44–55px band below its sprite. Cropping it away
+would break the exact reduction, so the importer drops the *rows* instead: the
+sprite is the tallest run of ink rows in its cell, the label is a short run, and
+keeping only the tallest run erases the label while leaving the sprite exactly
+where it was drawn.
+
+**The first cut was worse than what was already shipping**, and both causes were
+mine, not the model's:
+
+- the sheet route never applied the dark outline the per-asset route used, so the
+  pale sprites (the levity trap is nearly white) lost their silhouette;
+- it decimated the whole cell, so sprites kept the model's small relative sizing
+  and came out thin and muddy.
+
+Fixed by cropping each sprite to a box that is a whole multiple of the reduction
+factor — the sprite then fills its icon the way a fitted one does, and the
+reduction stays exact, which a plain bbox resize cannot do at the same time.
+
+**Verified against the previous art, 8 icons side by side.** Better: the snare,
+the inferno trap, the blade, the shears and the pickaxe — cleaner silhouettes,
+better colour separation at 16×16. **Worse:** the levity trap came out as a
+square panel rather than a round disc, the dust as a solid blob rather than a
+loose heap, and the helmet as an oval egg rather than a domed helmet with a face
+opening. That is the model's choice of silhouette at grid scale; nothing in the
+keying caused it.
+
+**Blocks: the two ores tile cleanly, `rainbow_block` does not.** Opposite-edge
+colour agreement is 32/32 for both ores but **0/32** for the rainbow block: its
+spectrum runs left to right and does not wrap, so violet meets red at every block
+boundary and a wall shows a seam per block. Either ask for a band that wraps
+(red → violet → red within the tile) or let the procedural generator draw that
+one, which tiles by construction.
+
+### If you re-run sheet 1
+
+The three silhouettes above are the whole reason to. Add one line per item to the
+numbering, in the same style as the rest:
+
+```
+1  rainbow dust   - a LOOSE HEAP of separate grains, not one solid blob, with
+                    a few grains scattered loose above the pile
+9  rainbow helmet - a DOMED helmet with a clear dark face opening visible from
+                    the front-left, not a smooth oval egg
+15 levity trap    - a ROUND DISC seen face on, a circle not a square panel
+```
+
 ---
 
 # 1. Item icons — sixteen

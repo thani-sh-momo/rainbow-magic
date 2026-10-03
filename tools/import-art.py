@@ -48,9 +48,9 @@ ALPHA_MID = 128   # below this a downscaled edge pixel is dropped
 OUTLINE = (28, 20, 44, 255)
 
 
-def key_out_background(path):
+def key_out_background(image):
     """Alpha 0 for the connected background, 255 for the sprite."""
-    image = Image.open(path).convert("RGB")
+    image = image.convert("RGB")
     width, height = image.size
     background = image.getpixel((0, 0))
 
@@ -70,8 +70,129 @@ def key_out_background(path):
     return out
 
 
+def decimate(image, target):
+    """Reduce to `target` by a whole number, or refuse.
+
+    This is the point of the whole sheet layout: a whole factor means the result
+    is the source's own pixels averaged in exact blocks, with nothing invented. A
+    sheet that comes back at some size nobody asked for -- 2912x1440 is a real
+    example -- is cropped to the largest whole multiple of the target first, which
+    loses a couple of percent off the outside and keeps the reduction exact.
+    """
+    factor = min(image.width // target[0], image.height // target[1])
+    if factor < 1:
+        raise SystemExit(f"{image.size} is smaller than {target}, cannot decimate")
+    box = (target[0] * factor, target[1] * factor)
+    if box != image.size:
+        left, top = (image.width - box[0]) // 2, (image.height - box[1]) // 2
+        image = image.crop((left, top, left + box[0], top + box[1]))
+    print(f"      {image.size} / {factor} -> {target[0]}x{target[1]}")
+    return image.reduce(factor)
+
+
+def crop_cell(sheet, cols, rows, index):
+    cell_w, cell_h = sheet.width // cols, sheet.height // rows
+    col, row = index % cols, index // cols
+    return sheet.crop((col * cell_w, row * cell_h, (col + 1) * cell_w, (row + 1) * cell_h))
+
+
+def sprite_band(alpha):
+    """The rows holding the sprite, not the label underneath it.
+
+    The generator put a text label below every sprite on the icon sheet. A label
+    is a short run of rows; a sprite is a tall one; a pair of boots side by side is
+    still one tall run. Keeping only the tallest run erases the label while
+    leaving the sprite exactly where it was drawn, which is what lets the cell be
+    decimated without being cropped or re-fitted.
+    """
+    width, height = alpha.size
+    raw = alpha.tobytes()
+    row_has = [max(raw[y * width:(y + 1) * width]) > 0 for y in range(height)]
+
+    runs, start, quiet = [], None, 0
+    for index, has_ink in enumerate(row_has):
+        if has_ink:
+            quiet = 0
+            if start is None:
+                start = index
+        else:
+            quiet += 1
+            if start is not None and quiet >= 3:
+                runs.append((start, index - quiet))
+                start = None
+    if start is not None:
+        runs.append((start, height - 1))
+    if not runs:
+        return None
+    return max(runs, key=lambda run: run[1] - run[0])
+
+
+def icon_from_cell(cell):
+    """One icon sheet cell -> a 16x16 icon, by exact decimation.
+
+    The cell is not decimated whole. The sprite is cropped to a box that is a
+    whole multiple of the reduction factor, so the sprite fills its icon the way
+    the per-asset route made it fill one, and the reduction stays exact -- the two
+    things a plain resize of a bbox cannot both have. The label band is dropped
+    first so it cannot drag the crop down.
+    """
+    keyed = key_out_background(cell)
+    alpha = keyed.getchannel("A")
+
+    band = sprite_band(alpha)
+    if band is None:
+        raise SystemExit("cell is empty")
+    top, bottom = band
+    kept = Image.new("L", alpha.size, 0)
+    kept.paste(alpha.crop((0, top, alpha.width, bottom + 1)), (0, top))
+
+    box = kept.getbbox()
+    if box is None:
+        raise SystemExit("cell has no sprite after dropping the label band")
+    left, upper, right, lower = box
+
+    factor = min(cell.width // ICON, cell.height // ICON)
+    if factor < 2:
+        raise SystemExit(f"cell {cell.size} is too small to decimate to {ICON}x{ICON}")
+
+    def span(start, end, limit):
+        """Grow [start, end) to a whole multiple of the factor, inside the cell."""
+        want = max(factor, -(-(end - start) // factor) * factor)
+        want = min(want, limit - limit % factor)
+        origin = start - (want - (end - start)) // 2
+        origin = max(0, min(origin, limit - want))
+        return origin, want
+
+    x, width = span(left, right, cell.width)
+    y, height = span(upper, lower, cell.height)
+
+    sprite = decimate(keyed.crop((x, y, x + width, y + height)), (width // factor, height // factor))
+    return finish_icon(sprite)
+
+
+def finish_icon(sprite):
+    """Threshold the alpha, add the outline if it fits, centre on a 16x16 canvas.
+
+    The outline is the same one the hand-drawn sprites use. It is not decoration:
+    the model's pale sprites (the levity trap is nearly white) lose their
+    silhouette against the inventory's own light background without it. It is
+    skipped when the sprite is wide enough to fill the canvas, because the one
+    pixel would have to be clipped off.
+    """
+    sprite.putalpha(sprite.getchannel("A").point(lambda v: 255 if v >= ALPHA_MID else 0))
+
+    if max(sprite.size) <= ICON - 2:
+        alpha = sprite.getchannel("A")
+        ring = ImageChops.subtract(alpha.filter(ImageFilter.MaxFilter(3)), alpha)
+        sprite = Image.composite(Image.new("RGBA", sprite.size, OUTLINE), sprite, ring)
+
+    canvas = Image.new("RGBA", (ICON, ICON), (0, 0, 0, 0))
+    canvas.paste(sprite, ((ICON - sprite.width) // 2, (ICON - sprite.height) // 2))
+    return canvas
+
+
 def icon_sprite(sprite):
-    """Fit the keyed sprite into a 16x16 icon, centred, with a dark outline."""
+    """Fit one keyed sprite into a 16x16 icon, centred, aspect preserved."""
     box = sprite.getchannel("A").getbbox()
     if box is None:
         raise SystemExit("sprite keyed away to nothing -- is its background flat?")
@@ -80,16 +201,7 @@ def icon_sprite(sprite):
     longest = max(sprite.size)
     scale = ICON_INK / longest
     size = (max(1, round(sprite.width * scale)), max(1, round(sprite.height * scale)))
-    sprite = sprite.resize(size, Image.LANCZOS)
-    sprite.putalpha(sprite.getchannel("A").point(lambda v: 255 if v >= ALPHA_MID else 0))
-
-    alpha = sprite.getchannel("A")
-    ring = ImageChops.subtract(alpha.filter(ImageFilter.MaxFilter(3)), alpha)
-    sprite = Image.composite(Image.new("RGBA", sprite.size, OUTLINE), sprite, ring)
-
-    canvas = Image.new("RGBA", (ICON, ICON), (0, 0, 0, 0))
-    canvas.paste(sprite, ((ICON - sprite.width) // 2, (ICON - sprite.height) // 2))
-    return canvas
+    return finish_icon(sprite.resize(size, Image.LANCZOS))
 
 
 def flat_resize(path, size, crop=None):
@@ -109,15 +221,7 @@ def save(image, target):
     print(f"  {target.relative_to(REPO)}  {image.width}x{image.height}")
 
 
-def main():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("source", type=pathlib.Path, help="folder holding the generated art")
-    args = parser.parse_args()
-
-    src = args.source
-    if not src.is_dir():
-        raise SystemExit(f"{src} is not a directory")
-
+def import_folder(src):
     def find(name):
         hits = list(src.rglob(f"{name}.jpg")) + list(src.rglob(f"{name}.png"))
         if not hits:
@@ -126,7 +230,8 @@ def main():
 
     print("item icons:")
     for name in ITEM_ICONS:
-        save(icon_sprite(key_out_background(find(name))), RESOURCES / "items" / f"{name}.png")
+        save(icon_sprite(key_out_background(Image.open(find(name)))),
+             RESOURCES / "items" / f"{name}.png")
 
     print("block tiles:")
     for name in BLOCK_TILES:
@@ -149,6 +254,69 @@ def main():
         raise SystemExit("need one pack_icon under a behavior/ folder and one outside it")
     save(flat_resize(behavior_icon[0], (128, 128)), REPO / "behavior" / "pack_icon.png")
     save(flat_resize(resource_icon[0], (128, 128)), REPO / "resource-pack" / "pack_icon.png")
+
+
+def find_sheet(folder, stem):
+    for suffix in (".jpg", ".jpeg", ".png"):
+        candidate = folder / f"{stem}{suffix}"
+        if candidate.exists():
+            return candidate
+    raise SystemExit(f"no {stem}.jpg under {folder}")
+
+
+def import_sheets(folder):
+    """Import the five-sheet layout: whole set, exact decimation, no resampling."""
+    print("icons from sheet_1 (4x4 grid):")
+    sheet = Image.open(find_sheet(folder, "sheet_1")).convert("RGB")
+    for index, name in enumerate(ITEM_ICONS):
+        save(icon_from_cell(crop_cell(sheet, 4, 4, index)), RESOURCES / "items" / f"{name}.png")
+
+    print("block tiles from sheet_2 (2x2 grid, last cell empty):")
+    sheet = Image.open(find_sheet(folder, "sheet_2")).convert("RGB")
+    for index, name in enumerate(BLOCK_TILES):
+        save(decimate(crop_cell(sheet, 2, 2, index), (16, 16)).convert("RGBA"),
+             RESOURCES / "blocks" / f"{name}.png")
+
+    # The strip is one continuous spectrum, so both armour layers take the whole
+    # rainbow rather than half each: the UV islands of the two layers sample
+    # different parts of the sheet anyway, so a full spectrum on both reads as a
+    # full rainbow on the armour.
+    print("armour from sheet_3 (one strip, both layers):")
+    sheet = Image.open(find_sheet(folder, "sheet_3")).convert("RGB")
+    strip = decimate(sheet, (64, 32)).convert("RGBA")
+    for name in ("rainbow_1", "rainbow_2"):
+        save(strip.copy(), RESOURCES / "models" / "armor" / f"{name}.png")
+
+    print("unicorn fur from sheet_4:")
+    sheet = Image.open(find_sheet(folder, "sheet_4")).convert("RGB")
+    save(decimate(sheet, (64, 64)).convert("RGBA"),
+         RESOURCES / "entity" / "rainbow_magic" / "glitter_unicorn.png")
+
+    print("pack icons from sheet_5 (two halves):")
+    sheet = Image.open(find_sheet(folder, "sheet_5")).convert("RGB")
+    targets = (REPO / "behavior" / "pack_icon.png", REPO / "resource-pack" / "pack_icon.png")
+    for index, target in enumerate(targets):
+        save(decimate(crop_cell(sheet, 2, 1, index), (128, 128)).convert("RGBA"), target)
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("source", nargs="?", type=pathlib.Path,
+                        help="folder holding one image per asset")
+    parser.add_argument("--sheets", type=pathlib.Path,
+                        help="folder holding the five sheet images instead")
+    args = parser.parse_args()
+
+    if args.sheets:
+        if not args.sheets.is_dir():
+            raise SystemExit(f"{args.sheets} is not a directory")
+        import_sheets(args.sheets)
+    elif args.source:
+        if not args.source.is_dir():
+            raise SystemExit(f"{args.source} is not a directory")
+        import_folder(args.source)
+    else:
+        parser.error("give a folder, or --sheets FOLDER")
 
 
 if __name__ == "__main__":
