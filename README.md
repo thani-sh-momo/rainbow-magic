@@ -248,6 +248,10 @@ reverting them one at a time.
 
 **Still not verified**, because the engine owns these — worth a look in play:
 
+- **Whether the shears drop twice on the mobs vanilla already shears.** Now that the item
+  carries `minecraft:is_shears`, the engine may shear a sheep itself *and* let the script
+  spawn its own wool. If sheep start giving suspiciously generous wool, that is why.
+
 - **Whether the engine raises `playerInteractWithEntity` at all with a custom item in hand.**
   The shears now carry `minecraft:is_shears` and `minecraft:is_tool`, so the engine should shear
   sheep, mooshrooms and snow golems natively; the script extends that to every other mob. If
