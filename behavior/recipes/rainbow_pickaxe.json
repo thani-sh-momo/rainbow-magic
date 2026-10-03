@@ -22,6 +22,11 @@
 		},
 		"result": {
 			"item": "rainbow_magic:rainbow_pickaxe"
-		}
+		},
+		"unlock": [
+			{
+				"item": "rainbow_magic:rainbow_ingot"
+			}
+		]
 	}
 }

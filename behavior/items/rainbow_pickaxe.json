@@ -8,9 +8,7 @@
 			}
 		},
 		"components": {
-			"minecraft:icon": {
-				"texture": "rainbow_pickaxe"
-			},
+			"minecraft:icon": "rainbow_pickaxe",
 			"minecraft:display_name": {
 				"value": "Rainbow Pickaxe"
 			},

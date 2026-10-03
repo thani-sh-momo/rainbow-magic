@@ -8,9 +8,7 @@
 			}
 		},
 		"components": {
-			"minecraft:icon": {
-				"texture": "trap_snare"
-			},
+			"minecraft:icon": "trap_snare",
 			"minecraft:display_name": {
 				"value": "Magical Trap: Snare"
 			},

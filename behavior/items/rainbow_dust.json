@@ -8,9 +8,7 @@
 			}
 		},
 		"components": {
-			"minecraft:icon": {
-				"texture": "rainbow_dust"
-			},
+			"minecraft:icon": "rainbow_dust",
 			"minecraft:display_name": {
 				"value": "Rainbow Dust"
 			},

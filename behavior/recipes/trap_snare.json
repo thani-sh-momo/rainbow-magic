@@ -27,6 +27,11 @@
 		"result": {
 			"item": "rainbow_magic:trap_snare",
 			"count": 2
-		}
+		},
+		"unlock": [
+			{
+				"item": "rainbow_magic:rainbow_ingot"
+			}
+		]
 	}
 }

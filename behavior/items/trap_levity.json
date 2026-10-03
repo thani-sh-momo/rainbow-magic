@@ -8,9 +8,7 @@
 			}
 		},
 		"components": {
-			"minecraft:icon": {
-				"texture": "trap_levity"
-			},
+			"minecraft:icon": "trap_levity",
 			"minecraft:display_name": {
 				"value": "Magical Trap: Levity"
 			},

@@ -8,9 +8,7 @@
 			}
 		},
 		"components": {
-			"minecraft:icon": {
-				"texture": "trap_inferno"
-			},
+			"minecraft:icon": "trap_inferno",
 			"minecraft:display_name": {
 				"value": "Magical Trap: Inferno"
 			},

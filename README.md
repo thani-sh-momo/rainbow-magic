@@ -189,8 +189,14 @@ Run and passing here:
   tables, features and the entity's client definition.
 - **The archives** — built and checked for a `manifest.json` at the root.
 
-**Not** verified, because nothing here can run Minecraft: the values the engine
-owns. Worth a look on first launch —
+Learned from an actual load, and fixed: importing the first build into Bedrock
+Edition rejected `minecraft:icon` written as an object — that form needs a newer
+schema than `format_version` 1.21.50, where the component wants a bare texture
+name — and refused all nine crafting recipes for want of `unlock` data. Both are
+now gated in `check-pack.py`, and reverting either fix fails that check.
+
+**Still not verified**, because the engine owns these: the values and behaviours
+no static check can reach. Worth a look on first launch —
 
 - `minecraft:damage: 100` on the blade (does 100 damage land as intended, or does
   the engine clamp it?),

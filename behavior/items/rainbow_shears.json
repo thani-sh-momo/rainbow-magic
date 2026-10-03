@@ -8,9 +8,7 @@
 			}
 		},
 		"components": {
-			"minecraft:icon": {
-				"texture": "rainbow_shears"
-			},
+			"minecraft:icon": "rainbow_shears",
 			"minecraft:display_name": {
 				"value": "Supershears"
 			},

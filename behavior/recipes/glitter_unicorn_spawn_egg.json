@@ -29,6 +29,11 @@
 		],
 		"result": {
 			"item": "rainbow_magic:glitter_unicorn_spawn_egg"
-		}
+		},
+		"unlock": [
+			{
+				"item": "rainbow_magic:rainbow_ingot"
+			}
+		]
 	}
 }

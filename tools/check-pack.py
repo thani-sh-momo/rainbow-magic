@@ -127,8 +127,18 @@ for identifier, path in items.items():
     if icon is None:
         complain(f"{relative(path)}: no minecraft:icon, so it would be a missing texture")
         continue
-    if icon["texture"] not in item_textures:
-        complain(f"{relative(path)}: icon '{icon['texture']}' is not in item_texture.json")
+    if isinstance(icon, dict):
+        # At the format_version this pack declares, the engine wants a bare
+        # texture name. The { "texture": ... } object form is a newer schema and
+        # is rejected outright: "this member was found in the input, but is not
+        # present in the Schema".
+        complain(
+            f"{relative(path)}: minecraft:icon is an object, but this format_version wants "
+            f"a plain texture name -- the {{'texture': ...}} form needs a newer schema"
+        )
+        icon = icon.get("texture")
+    if icon not in item_textures:
+        complain(f"{relative(path)}: icon '{icon}' is not in item_texture.json")
 
 for identifier, path in blocks.items():
     components = load(path)["minecraft:block"]["components"]
@@ -167,6 +177,15 @@ for path, document in each_json(os.path.join(BEHAVIOR, "recipes")):
     tags = recipe.get("tags", [])
     if "crafting_table" in tags and len(recipe.get("pattern", [])) == 0 and "ingredients" not in recipe:
         complain(f"{relative(path)}: a crafting_table recipe with neither a pattern nor ingredients")
+
+    # Confirmed by the engine's own error: "1.20+ Recipes require unlock data".
+    # Furnace recipes are exempt -- the same load reported no error for the one
+    # furnace recipe in this pack.
+    if key in ("minecraft:recipe_shaped", "minecraft:recipe_shapeless") and "unlock" not in recipe:
+        complain(f"{relative(path)}: a crafting recipe needs unlock data at format_version 1.20+")
+    for unlock in recipe.get("unlock", []) if isinstance(recipe.get("unlock"), list) else []:
+        if "item" in unlock and is_ours(unlock["item"]) and not defined(unlock["item"]):
+            complain(f"{relative(path)}: unlocks on '{unlock['item']}', which this pack does not define")
 
 # --------------------------------------------------------------------------- #
 # loot tables, features and feature rules

@@ -18,6 +18,11 @@
 		},
 		"result": {
 			"item": "rainbow_magic:rainbow_shears"
-		}
+		},
+		"unlock": [
+			{
+				"item": "rainbow_magic:rainbow_ingot"
+			}
+		]
 	}
 }

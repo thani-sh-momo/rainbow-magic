@@ -8,9 +8,7 @@
 			}
 		},
 		"components": {
-			"minecraft:icon": {
-				"texture": "glitter_unicorn_spawn_egg"
-			},
+			"minecraft:icon": "glitter_unicorn_spawn_egg",
 			"minecraft:display_name": {
 				"value": "Rainbow Glitter Unicorn Spawn Egg"
 			},

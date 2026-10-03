@@ -22,6 +22,11 @@
 		},
 		"result": {
 			"item": "rainbow_magic:rainbow_blade"
-		}
+		},
+		"unlock": [
+			{
+				"item": "rainbow_magic:rainbow_ingot"
+			}
+		]
 	}
 }
