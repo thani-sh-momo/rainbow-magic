@@ -86,7 +86,7 @@ not depend on getting the canvas size you asked for.
 
 ---
 
-## Sheet 1 — the sixteen item icons
+## Sheet 1 — the sixteen item icons → `textures/items/*.png`, 16×16 each
 
 ```
 Minecraft pixel art sheet: a 4x4 grid of 16 separate item icons on one square
@@ -125,7 +125,7 @@ labels, no text, no watermark, no drop shadows, no glow.
 Square 1:1 image, 2048x2048.
 ```
 
-## Sheet 2 — the three block tiles
+## Sheet 2 — the three block tiles → `textures/blocks/*.png`, 16×16 each
 
 ```
 Minecraft pixel art sheet: a 2x2 grid of four equal square cells on one image.
@@ -150,7 +150,7 @@ No grid lines, no cell borders, no numbers, no labels, no text, no watermark.
 Square 1:1 image, 2048x2048.
 ```
 
-## Sheet 3 — the armour gradient (both layers)
+## Sheet 3 — the armour gradient → `textures/models/armor/rainbow_1.png` and `rainbow_2.png`, 64×32 each
 
 ```
 A single seamless Minecraft armour texture strip, filling the entire frame edge
@@ -168,7 +168,7 @@ No text, no numbers, no watermark, no logos.
 Aspect ratio 2:1, image 2048x1024.
 ```
 
-## Sheet 4 — the unicorn fur
+## Sheet 4 — the unicorn fur → `textures/entity/rainbow_magic/glitter_unicorn.png`, 64×64
 
 ```
 A single seamless fur texture, filling the entire frame edge to edge. No object,
@@ -186,7 +186,7 @@ No text, no numbers, no watermark, no logos.
 Square 1:1 image, 2048x2048.
 ```
 
-## Sheet 5 — the two pack icons
+## Sheet 5 — the two pack icons → `behavior/pack_icon.png` and `resource-pack/pack_icon.png`, 128×128 each
 
 ```
 Minecraft pixel art sheet: one wide image split into two equal square halves,
