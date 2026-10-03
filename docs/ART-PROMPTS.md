@@ -49,6 +49,169 @@ Three practical notes:
 
 ---
 
+# Sheet prompts: all 24 assets in five generations, pixel art, exact sizes
+
+This is the route to take by default. It trades five generations for one per
+asset, keeps a single style across the whole set, and — the reason it is laid out
+the way it is — **every image reduces to its final size by a whole number**, so
+nothing is ever interpolated. Blur comes from arbitrary resampling factors; a
+clean 1/32 decimation cannot invent detail.
+
+| sheet | canvas | grid | cell | becomes | reduction |
+| --- | --- | --- | --- | --- | --- |
+| icons | 2048×2048 | 4×4 | 512×512 | 16×16 each | 1/32 |
+| blocks | 2048×2048 | 2×2 | 1024×1024 | 16×16 each | 1/64 |
+| armour | 2048×1024 | whole frame | 2048×1024 | two 64×32 | 1/32 |
+| fur | 2048×2048 | whole frame | 2048×2048 | 64×64 | 1/32 |
+| pack icons | 2048×1024 | 2×1 | 1024×1024 | 128×128 each | 1/8 |
+
+Every one of those is still exact if the interface hands back 1024-pixel
+canvases instead — the factors just halve. That is deliberate: the layout does
+not depend on getting the canvas size you asked for.
+
+**Three honest caveats before you spend generations:**
+
+- **No `resize` step is avoidable entirely**; a model that returns a 2048-pixel
+  JPEG cannot return a 16×16 file. What this design removes is *interpolation*.
+  The sheet is still cut into cells and decimated — by an exact factor, so the
+  result is the model's own pixels and nothing else.
+- **The model will not draw on our pixel grid.** It will imitate pixel art at its
+  own block size, probably unaligned to the cell, and JPEG will ring around the
+  hard edges. So after decimating, expect one quantise pass — snap to a small
+  palette and hard alpha — to put the crisp edges back. That pass is not a
+  resize, but it is a pass, and the output will be cleaner than not doing it.
+- **Models are mediocre at true pixel art.** Expect to re-run a sheet and pick
+  the better one. If exact 16×16 pixel art is the priority rather than the look,
+  `tools/make-textures.py` already draws it procedurally and exactly, for free.
+
+---
+
+## Sheet 1 — the sixteen item icons
+
+```
+Minecraft pixel art sheet: a 4x4 grid of 16 separate item icons on one square
+image, in this exact reading order, left to right then top to bottom.
+
+1  rainbow dust      - a small heap of iridescent rainbow crystal grains
+2  rainbow ingot     - a chunky casting bar of rainbow metal
+3  rainbow blade     - a straight sword, rainbow blade, grey grip
+4  rainbow pickaxe   - rainbow metal head on a brown wooden handle
+5  rainbow axe       - rainbow metal head on a brown wooden handle
+6  rainbow shovel    - rainbow metal spade on a brown wooden handle
+7  rainbow hoe       - rainbow metal blade angled forward on a brown handle
+8  rainbow shears    - two crossed rainbow blades with grey handles
+9  rainbow helmet    - a closed knight's helmet of rainbow metal, no face
+10 rainbow chestplate- a rainbow metal breastplate with pauldrons, hollow
+11 rainbow leggings  - rainbow metal leg guards joined by a waist band, hollow
+12 rainbow boots     - a pair of rainbow metal boots
+13 snare trap        - a round disc of coiled glowing rainbow thread, green thorns
+14 inferno trap      - a round black disc, glowing orange molten core, flames
+15 levity trap       - a round pale sky-blue disc, cyan swirl, white cloud puffs
+16 rainbow spawn egg - a speckled egg in iridescent pastel rainbow
+
+STYLE: true 16x16 pixel art. Hard-edged square pixels, a small limited palette,
+flat colours, no anti-aliasing, no smooth gradients, no soft or blended shading,
+no glow. Rainbow surfaces are FLAT BANDS of colour -- red, orange, yellow, green,
+cyan, blue, violet -- each band a couple of pixels wide, never a smooth blend.
+
+LAYOUT: every cell is exactly the same size and the grid is perfectly even. Each
+icon is a 16x16 pixel-art sprite, centred in its cell, filling most of the cell
+but not touching its edges, with clear white space around it.
+
+The background across the whole sheet is one flat pure white (#FFFFFF), including
+the gaps between icons. No grid lines, no cell borders, no frames, no numbers, no
+labels, no text, no watermark, no drop shadows, no glow.
+
+Square 1:1 image, 2048x2048.
+```
+
+## Sheet 2 — the three block tiles
+
+```
+Minecraft pixel art sheet: a 2x2 grid of four equal square cells on one image.
+
+top left     - rainbow ore: grey stone with small square rainbow crystal specks
+               scattered through it
+top right    - deepslate rainbow ore: dark charcoal stone, same rainbow specks
+bottom left  - rainbow block: solid rainbow metal in flat banded rainbow stripes,
+               light along the top and left edge, darker along the bottom and right
+bottom right - leave completely empty
+
+STYLE: true pixel art. Hard-edged square pixels, small limited palette, flat
+colours, no anti-aliasing, no smooth gradients, no vignette, no soft shading.
+
+LAYOUT: each texture fills its whole cell edge to edge with no margin and no
+frame, and is designed to tile seamlessly -- the colours on the left edge must
+continue at the right edge, and the top at the bottom.
+
+The bottom-right cell is plain flat white and contains nothing at all.
+No grid lines, no cell borders, no numbers, no labels, no text, no watermark.
+
+Square 1:1 image, 2048x2048.
+```
+
+## Sheet 3 — the armour gradient (both layers)
+
+```
+A single seamless Minecraft armour texture strip, filling the entire frame edge
+to edge. No object, no background, no border.
+
+A rainbow spectrum running left to right: red, orange, yellow, green, cyan, blue,
+violet, evenly spaced, with fine white glitter pixels scattered evenly across it.
+Flat bands of colour with hard pixel edges, in the flat style of a Minecraft
+texture -- not a smooth photographic gradient.
+
+Perfectly flat and even: no lighting direction, no shadows, no vignette, no
+perspective, no metal shading, no border, no frame.
+
+No text, no numbers, no watermark, no logos.
+Aspect ratio 2:1, image 2048x1024.
+```
+
+## Sheet 4 — the unicorn fur
+
+```
+A single seamless fur texture, filling the entire frame edge to edge. No object,
+no background, no border, no face, no eyes, no horn.
+
+Iridescent white unicorn fur: pale pearlescent white with soft patches of pink,
+mint, sky blue and lilac, and small white glitter pixels scattered evenly across
+the whole frame. Flat hard-edged patches of colour in the flat style of a
+Minecraft texture, not a smooth blur.
+
+Evenly lit from every direction: no lighting direction, no shadows, no vignette,
+no single bright area.
+
+No text, no numbers, no watermark, no logos.
+Square 1:1 image, 2048x2048.
+```
+
+## Sheet 5 — the two pack icons
+
+```
+Minecraft pixel art sheet: one wide image split into two equal square halves,
+side by side, each half one add-on pack icon.
+
+left half  - a large faceted rainbow crystal with white sparkle pixels around it,
+             a rainbow pickaxe and a rainbow sword crossed behind it, on a dark
+             indigo background
+right half - a white unicorn head in profile facing left, a glowing rainbow spiral
+             horn, a pastel rainbow mane, on a dark indigo background with small
+             white star pixels
+
+STYLE: true pixel art. Hard-edged square pixels, small limited palette, flat
+colours, no anti-aliasing, no smooth gradients, no glow, no blur.
+
+LAYOUT: each icon fills its half edge to edge and is centred, bold and simple so
+it still reads when small. The two halves are exactly the same size.
+
+No border, no frame, no divider line, no text, no numbers, no labels, no
+watermark.
+Aspect ratio 2:1, image 2048x1024.
+```
+
+---
+
 # 1. Item icons — sixteen
 
 Each ends at `resource-pack/textures/items/<name>.png`, 16×16, transparent.
