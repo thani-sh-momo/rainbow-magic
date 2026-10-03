@@ -11,12 +11,14 @@ import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 
 import {
+	RAINBOW_PICKAXE,
 	TRAP_SNARE,
 	capture,
 	holding,
 	interactWithBlock,
 	item,
 	loadAddon,
+	raiseBreak,
 	state,
 	tick,
 	useItem,
@@ -161,6 +163,44 @@ describe("the content probe", () => {
 		const later = capture(() => tick());
 
 		assert.equal(logged(later, "content:"), false);
+	});
+});
+
+describe("the pickaxe break report", () => {
+	test("it reports the engine's own break with the pickaxe", async () => {
+		await loadAddon();
+
+		const lines = capture(() => {
+			raiseBreak(holding(RAINBOW_PICKAXE), { type: { id: "minecraft:stone" } });
+		});
+
+		assert.ok(
+			logged(lines, "the engine broke minecraft:stone with the rainbow pickaxe"),
+			`expected a break report, got: ${lines.join("\n")}`,
+		);
+	});
+
+	test("it stays quiet for any other tool", async () => {
+		await loadAddon();
+
+		const lines = capture(() => {
+			raiseBreak(holding("minecraft:diamond_pickaxe"), { type: { id: "minecraft:stone" } });
+		});
+
+		assert.equal(logged(lines, "the engine broke"), false);
+	});
+
+	test("it stops after a few, so it cannot become a firehose", async () => {
+		await loadAddon();
+		const player = holding(RAINBOW_PICKAXE);
+
+		const lines = capture(() => {
+			for (let i = 0; i < 10; i += 1) {
+				raiseBreak(player, { type: { id: "minecraft:stone" } });
+			}
+		});
+
+		assert.equal(lines.filter((line) => line.includes("the engine broke")).length, 3);
 	});
 });
 

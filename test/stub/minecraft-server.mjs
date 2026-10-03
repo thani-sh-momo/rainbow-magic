@@ -17,6 +17,7 @@ const EVENT_NAMES = [
 	"entityHitBlock",
 	"entitySpawn",
 	"itemUse",
+	"playerBreakBlock",
 	"playerInteractWithBlock",
 	"playerInteractWithEntity",
 	"worldLoad",
@@ -285,6 +286,11 @@ export function useItem(entity, itemStack) {
 
 export function raiseSpawn(entityToSpawn) {
 	raise("entitySpawn", { entity: entityToSpawn });
+}
+
+/** A block the player broke, as `playerBreakBlock` reports it. */
+export function raiseBreak(playerEntity, permutation) {
+	raise("playerBreakBlock", { player: playerEntity, brokenBlockPermutation: permutation });
 }
 
 export function raiseWorldLoad() {

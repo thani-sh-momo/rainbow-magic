@@ -15,8 +15,7 @@
 			},
 			"animations": {
 				"baby_transform": "animation.horse.v3.baby_transform",
-				"walk": "animation.horse.v3.walk",
-				"look_at_player": "animation.horse.v3.look_at_player"
+				"walk": "animation.horse.v3.walk"
 			},
 			"scripts": {
 				"initialize": [
@@ -32,7 +31,6 @@
 				],
 				"animate": [
 					"walk",
-					"look_at_player",
 					{
 						"baby_transform": "query.is_baby"
 					}

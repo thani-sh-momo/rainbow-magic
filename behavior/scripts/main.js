@@ -24,7 +24,7 @@ import {
  * Reported in the boot line, so the content log says which build is installed.
  * Bump it on every change that alters behaviour.
  */
-const BUILD = "1.0.5";
+const BUILD = "1.0.6";
 
 const TAG = "[RainbowMagic]";
 
@@ -342,6 +342,38 @@ subscribe("entityHitBlock", world?.afterEvents?.entityHitBlock, (event) => {
 	breakUnbreakable(player, block);
 	// Durability is never spent here: the pickaxe has no
 	// `minecraft:durability` component, so it cannot wear out.
+});
+
+/** How many pickaxe breaks to report, so the log answers "is the engine's own
+ * mining path running with this tool" without becoming a firehose. */
+const PICKAXE_BREAK_LOGS = 3;
+
+let pickaxeBreaksLogged = 0;
+
+/**
+ * Reports the first few blocks the engine itself broke while the rainbow pickaxe
+ * was held.
+ *
+ * This is the difference between the two ways mining can look broken: a block
+ * reached the engine's own break path with this tool, or it never did because
+ * the tool is not being treated as a pickaxe. Only the first few are logged.
+ */
+subscribe("playerBreakBlock", world?.afterEvents?.playerBreakBlock, (event) => {
+	if (pickaxeBreaksLogged >= PICKAXE_BREAK_LOGS) {
+		return;
+	}
+	if (heldItem(event.player)?.typeId !== PICKAXE) {
+		return;
+	}
+	pickaxeBreaksLogged += 1;
+
+	let broken = "unreadable";
+	try {
+		broken = event.brokenBlockPermutation?.type?.id ?? broken;
+	} catch (err) {
+		// left as unreadable
+	}
+	log(`the engine broke ${broken} with the rainbow pickaxe (its mining path, not the script)`);
 });
 
 /* ------------------------------------------------------------------ *

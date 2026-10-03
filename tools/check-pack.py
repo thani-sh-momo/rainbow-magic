@@ -333,6 +333,16 @@ for identifier, (path, client) in client_entities.items():
     for name, reference in client["textures"].items():
         if not texture_exists(reference):
             complain(f"{relative(path)}: texture '{name}' points at a missing {reference}.png")
+    # animation.horse.v3.look_at_player calls query.head_y_rotation(20), and the
+    # engine only accepts that clamp argument on the vanilla horse-family types:
+    # on a custom entity it errors on every frame the animation runs.
+    for name, reference in client.get("animations", {}).items():
+        if reference == "animation.horse.v3.look_at_player":
+            complain(
+                f"{relative(path)}: '{name}' is animation.horse.v3.look_at_player, which calls "
+                f"query.head_y_rotation -- accepted only on vanilla horse types, so it errors every "
+                f"frame on a custom entity"
+            )
 
 SCRIPT = os.path.join(BEHAVIOR, "scripts", "main.js")
 script = open(SCRIPT, encoding="utf-8").read()

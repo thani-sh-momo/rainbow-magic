@@ -16,6 +16,7 @@ export {
 	interactWithEntity,
 	placeMobs,
 	player,
+	raiseBreak,
 	raiseSpawn,
 	raiseWorldLoad,
 	swingAt,
