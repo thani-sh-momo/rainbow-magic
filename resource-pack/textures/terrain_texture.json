@@ -4,13 +4,13 @@
 	"padding": 8,
 	"num_mip_levels": 4,
 	"texture_data": {
-		"deepslate_rainbow_ore": {
+		"rainbow_magic:deepslate_rainbow_ore": {
 			"textures": "textures/blocks/deepslate_rainbow_ore"
 		},
-		"rainbow_block": {
+		"rainbow_magic:rainbow_block": {
 			"textures": "textures/blocks/rainbow_block"
 		},
-		"rainbow_ore": {
+		"rainbow_magic:rainbow_ore": {
 			"textures": "textures/blocks/rainbow_ore"
 		}
 	}

@@ -1,5 +1,5 @@
 {
-	"format_version": "1.21.50",
+	"format_version": "1.26.50",
 	"minecraft:block": {
 		"description": {
 			"identifier": "rainbow_magic:rainbow_block",
@@ -8,10 +8,10 @@
 			}
 		},
 		"components": {
+			"minecraft:geometry": "minecraft:geometry.full_block",
 			"minecraft:material_instances": {
 				"*": {
-					"texture": "rainbow_block",
-					"render_method": "opaque"
+					"texture": "rainbow_magic:rainbow_block"
 				}
 			},
 			"minecraft:destructible_by_mining": {

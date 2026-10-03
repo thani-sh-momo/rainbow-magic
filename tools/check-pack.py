@@ -21,6 +21,30 @@ RESOURCES = os.path.join(ROOT, "resource-pack")
 
 problems: list[str] = []
 
+# The version that added tag-query block descriptors to minecraft:digger. Below
+# it the descriptor is accepted but matches nothing, which leaves destroy_speeds
+# empty -- and a digger with no matching entry mines nothing at all.
+TAGS_DESCRIPTOR_VERSION = (1, 26, 20)
+
+# Bedrock effect ids. "glowing" is deliberately absent: it is a Java-only effect
+# and an entity.addEffect("glowing", ...) call throws at runtime.
+BEDROCK_EFFECTS = {
+    "absorption", "bad_omen", "blindness", "conduit_power", "darkness", "fatal_poison",
+    "fire_resistance", "haste", "health_boost", "hunger", "infested", "instant_damage",
+    "instant_health", "invisibility", "jump_boost", "levitation", "mining_fatigue",
+    "nausea", "night_vision", "oozing", "poison", "raid_omen", "regeneration",
+    "resistance", "saturation", "slow_falling", "slowness", "speed", "strength",
+    "trial_omen", "village_hero", "water_breathing", "weakness", "weaving",
+    "wind_charged", "wither",
+}
+
+
+def version_tuple(value) -> tuple:
+    """Turns "1.26.50" or [1, 26, 50] into a comparable tuple."""
+    if isinstance(value, (list, tuple)):
+        return tuple(int(part) for part in value)
+    return tuple(int(part) for part in str(value).split("."))
+
 
 def complain(message: str) -> None:
     problems.append(message)
@@ -149,10 +173,42 @@ for identifier, path in items.items():
         complain(f"{relative(path)}: icon '{icon}' is not in item_texture.json")
 
 for identifier, path in blocks.items():
-    components = load(path)["minecraft:block"]["components"]
+    section = load(path)["minecraft:block"]
+    components = section["components"]
+    # A custom block with no geometry has no model, and renders as the
+    # missing-texture block: a question mark on a dirt-coloured cube.
+    if "minecraft:geometry" not in components:
+        complain(
+            f"{relative(path)}: no minecraft:geometry -- the block has no model and "
+            f"shows as the missing-texture placeholder"
+        )
     for instance in components.get("minecraft:material_instances", {}).values():
-        if instance["texture"] not in terrain_textures:
-            complain(f"{relative(path)}: texture '{instance['texture']}' is not in terrain_texture.json")
+        texture = instance["texture"]
+        if ":" not in texture:
+            complain(
+                f"{relative(path)}: texture '{texture}' is not namespaced -- terrain_texture "
+                f"shortnames are written as namespace:name"
+            )
+        if texture not in terrain_textures:
+            complain(f"{relative(path)}: texture '{texture}' is not in terrain_texture.json")
+
+for identifier, path in items.items():
+    document = load(path)
+    section = document["minecraft:item"]
+    digger = section["components"].get("minecraft:digger")
+    if not digger:
+        continue
+    item_version = version_tuple(document["format_version"])
+    if item_version < TAGS_DESCRIPTOR_VERSION:
+        for entry in digger.get("destroy_speeds", []):
+            block = entry.get("block")
+            if isinstance(block, dict) and "tags" in block:
+                complain(
+                    f"{relative(path)}: a tags block descriptor needs format_version "
+                    f"{'.'.join(str(part) for part in TAGS_DESCRIPTOR_VERSION)} or later, and this "
+                    f"file declares {document['format_version']} -- the descriptor is accepted but "
+                    f"matches nothing, so the item mines nothing at all"
+                )
 
 # --------------------------------------------------------------------------- #
 # recipes
@@ -256,14 +312,49 @@ for identifier, (path, client) in client_entities.items():
         if not texture_exists(reference):
             complain(f"{relative(path)}: texture '{name}' points at a missing {reference}.png")
 
-script = open(os.path.join(BEHAVIOR, "scripts", "main.js"), encoding="utf-8").read()
+SCRIPT = os.path.join(BEHAVIOR, "scripts", "main.js")
+script = open(SCRIPT, encoding="utf-8").read()
 for identifier in re.findall(r'"(rainbow_magic:[a-z_]+)"', script):
     if not defined(identifier):
         complain(f"scripts/main.js refers to '{identifier}', which this pack does not define")
 
+# Effect names must be Bedrock effects. A Java-only name like "glowing" throws
+# only when an entity actually spawns, which is far too late to notice -- and it
+# costs the other effects in the same call.
+declared = re.findall(r"UNICORN_EFFECTS\s*=\s*\[([^\]]*)\]", script, re.DOTALL)
+effects = set(re.findall(r'"([a-z_]+)"', " ".join(declared)))
+effects |= set(re.findall(r'addEffect\(\s*"([a-z_]+)"', script))
+if not effects:
+    complain("scripts/main.js: no effect names found to check -- the shape changed, so the check is blind")
+for effect in sorted(effects):
+    if effect not in BEDROCK_EFFECTS:
+        complain(f"scripts/main.js: '{effect}' is not a Bedrock effect (Java-only effects throw at runtime)")
+
 for identifier in entities:
     if f'"{identifier}"' not in script:
         complain(f"{identifier}: not mentioned in scripts/main.js -- intentional? check the unicorn handling")
+
+# min_engine_version has to be at least the highest format_version in the pack,
+# or an engine that accepts the pack then rejects the files inside it.
+engine = version_tuple(behavior_manifest["header"]["min_engine_version"])
+highest = (None, (0,), "")
+for path, document in each_json(
+    os.path.join(BEHAVIOR, "items"),
+    os.path.join(BEHAVIOR, "blocks"),
+    os.path.join(BEHAVIOR, "entities"),
+    os.path.join(BEHAVIOR, "recipes"),
+    os.path.join(BEHAVIOR, "features"),
+    os.path.join(BEHAVIOR, "feature_rules"),
+):
+    version = document.get("format_version")
+    if isinstance(version, str) and version_tuple(version) > highest[1]:
+        highest = (path, version_tuple(version), version)
+if highest[0] and highest[1] > engine:
+    complain(
+        f"{relative(highest[0])} declares format_version {highest[2]}, above the manifest's "
+        f"min_engine_version {'.'.join(str(part) for part in engine)} -- the pack loads and then "
+        f"this file is rejected"
+    )
 
 # --------------------------------------------------------------------------- #
 

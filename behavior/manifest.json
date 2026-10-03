@@ -12,14 +12,14 @@
 		"description": "Rainbow ore, an unbreakable rainbow blade, a pickaxe that mines even bedrock, supershears, magical traps and a tameable Rainbow Glitter Unicorn",
 		"min_engine_version": [
 			1,
-			21,
+			26,
 			50
 		],
 		"uuid": "bc2a68d1-58da-4029-b56d-82538d854be0",
 		"version": [
 			1,
 			0,
-			3
+			4
 		]
 	},
 	"modules": [
@@ -29,7 +29,7 @@
 			"version": [
 				1,
 				0,
-				3
+				4
 			]
 		},
 		{
@@ -40,7 +40,7 @@
 			"version": [
 				1,
 				0,
-				3
+				4
 			]
 		}
 	],

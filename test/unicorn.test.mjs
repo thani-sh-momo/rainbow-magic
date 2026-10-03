@@ -10,16 +10,47 @@ import { describe, test } from "node:test";
 import { capture, UNICORN, entity, loadAddon, raiseSpawn, state } from "./harness.mjs";
 
 describe("the unicorn on spawn", () => {
-	test("it glitters and it is kind", async () => {
+	test("it is kind and it keeps up", async () => {
 		await loadAddon();
 
 		raiseSpawn(entity({ typeId: UNICORN }));
 
 		assert.deepEqual(
 			state.effects.map((entry) => entry.effect),
-			["glowing", "regeneration"],
+			["regeneration", "speed"],
 		);
-		assert.equal(state.effects[1].options.amplifier, 1);
+	});
+
+	test("no Java-only effect is asked for", async () => {
+		await loadAddon();
+
+		raiseSpawn(entity({ typeId: UNICORN }));
+
+		// "glowing" does not exist in Bedrock and throws InvalidArgumentError,
+		// which used to cost the regeneration too.
+		for (const entry of state.effects) {
+			assert.notEqual(entry.effect, "glowing");
+		}
+	});
+
+	test("one effect failing does not cost the other", async () => {
+		await loadAddon();
+		const partial = entity({ typeId: UNICORN });
+		const realAddEffect = partial.addEffect;
+		partial.addEffect = (effect, ...rest) => {
+			if (effect === "regeneration") {
+				throw new Error("the entity is not ready for effects yet");
+			}
+			return realAddEffect(effect, ...rest);
+		};
+
+		capture(() => raiseSpawn(partial));
+
+		assert.deepEqual(
+			state.effects.map((entry) => entry.effect),
+			["speed"],
+			"the effect after the failing one must still be applied",
+		);
 	});
 
 	test("its blessings never show particles of their own", async () => {

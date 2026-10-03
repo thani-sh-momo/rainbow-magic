@@ -21,7 +21,9 @@
 			"scripts": {
 				"initialize": [
 					"variable.leg_stand_factor = 0.0;",
-					"variable.leg_x_rot_anim = 0.0;"
+					"variable.leg_x_rot_anim = 0.0;",
+					"variable.stand_anim = 0.0;",
+					"variable.inverse_max_stand_eat = 1.0;"
 				],
 				"pre_animation": [
 					"variable.head_x_rot = query.target_x_rotation + (query.modified_move_speed > 0.2 ? (math.cos(query.modified_distance_moved * 11.46) * 11.46 * query.modified_move_speed + query.modified_move_speed * 11.46) : 0.0);",

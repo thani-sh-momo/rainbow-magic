@@ -1,5 +1,5 @@
 {
-	"format_version": "1.21.50",
+	"format_version": "1.26.50",
 	"minecraft:block": {
 		"description": {
 			"identifier": "rainbow_magic:deepslate_rainbow_ore",
@@ -8,10 +8,10 @@
 			}
 		},
 		"components": {
+			"minecraft:geometry": "minecraft:geometry.full_block",
 			"minecraft:material_instances": {
 				"*": {
-					"texture": "deepslate_rainbow_ore",
-					"render_method": "opaque"
+					"texture": "rainbow_magic:deepslate_rainbow_ore"
 				}
 			},
 			"minecraft:destructible_by_mining": {

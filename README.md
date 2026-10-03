@@ -41,9 +41,8 @@ repairing them behind your back.
 
 Two mechanisms, because no single one covers "everything":
 
-- **Ordinary blocks** go through the item's own `minecraft:digger` speeds: one
-  entry matching the pickaxe, axe, shovel and hoe block tags at speed 20. Hard
-  blocks like obsidian break at that speed like any other.
+- **Ordinary blocks** go through the item's own `minecraft:digger` speeds: four
+  entries, one per block tag (pickaxe, axe, shovel, hoe), each at speed 20.
 - **Blocks no tool can break** — bedrock, barrier, command blocks, jigsaw, light
   block, structure void, end portal frame, reinforced deepslate — are the one
   thing a data file cannot reach. `scripts/main.js` listens for the swing
@@ -53,6 +52,15 @@ Two mechanisms, because no single one covers "everything":
 
 Portals are deliberately **not** on that list. Breaking an end portal or a
 nether portal would wreck a world for no fun.
+
+**The digger needs `format_version` 1.26.20 or later.** A `destroy_speeds` entry
+that names a block *tag* rather than a block id is only understood from that
+version; below it the entry is accepted and matches nothing. That matters more
+than it sounds: `destroy_speeds` acts as the item's whitelist, so a digger whose
+every entry matches nothing **mines nothing at all** — which is exactly what the
+first play-test found. `rainbow_pickaxe.json` therefore declares `1.26.50`, which
+is why the pack's `min_engine_version` is `1.26.50` and not lower.
+`tools/check-pack.py` fails any tag descriptor below that version.
 
 ### Supershears
 
@@ -117,7 +125,11 @@ into `behavior_packs/` and `resource_packs/`.
 
 Both packs are needed — the behavior pack holds the items, recipes and ore, and
 the resource pack holds the textures. There is no script API toggle to flip, and
-**no experiments are required**: everything here uses release features.
+**no experiments are required**: everything here uses release features, with one
+floor worth stating plainly — **Bedrock 1.26.50 or newer**. The rainbow pickaxe
+needs `format_version` 1.26.20 for its tag-based `destroy_speeds`, so the pack
+declares `min_engine_version` `1.26.50` and an older server rejects it with a
+clear version error rather than loading a pickaxe that cannot mine.
 
 1. **Get the packs.** Clone this repository and use `behavior/` and
    `resource-pack/`, or rename the release `.mcpack` files to `.zip` and extract
@@ -184,27 +196,35 @@ Run and passing here:
 
 - **All scripted behaviour** — the pickaxe on every block on its list, the
   shears on named and unnamed mobs, cooldowns, trap arming, spending and firing,
-  and the unicorn's spawn effects (37 tests).
+  and the unicorn's spawn effects (53 tests).
 - **Every data cross-reference** — manifests, uuids, textures, recipes, loot
   tables, features and the entity's client definition.
 - **The archives** — built and checked for a `manifest.json` at the root.
 
-Learned from an actual load, and fixed: importing the first build into Bedrock
-Edition rejected `minecraft:icon` written as an object — that form needs a newer
-schema than `format_version` 1.21.50, where the component wants a bare texture
-name — and refused all nine crafting recipes for want of `unlock` data. Both are
-now gated in `check-pack.py`, and reverting either fix fails that check.
+### Bugs the game found, and what now stops them coming back
 
-**Still not verified**, because the engine owns these: the values and behaviours
-no static check can reach. Worth a look on first launch —
+Every one of these passed a static check before it shipped, so each fix comes
+with a gate that fails when the fix is reverted — five for five, verified by
+reverting them one at a time.
+
+| Found by | Bug | Now gated by |
+| --- | --- | --- |
+| Loading the first build | `minecraft:icon` written as an object; that form needs a newer schema than the declared format version | the icon must be a bare texture name |
+| Loading the first build | All nine crafting recipes refused for want of `unlock` data | a shaped or shapeless recipe must carry `unlock` |
+| Play-testing | The ore and every custom block rendered as the missing-texture placeholder | a block must declare `minecraft:geometry`, and its texture shortname must be namespaced and present in `terrain_texture.json` |
+| Play-testing | The pickaxe mined nothing at all | a tag descriptor in `destroy_speeds` requires `format_version` 1.26.20+ |
+| Play-testing | `addEffect("glowing", …)` threw `InvalidArgumentError` | every effect name must be a Bedrock effect |
+
+**Still not verified**, because the engine owns these — worth a look in play:
 
 - `minecraft:damage: 100` on the blade (does 100 damage land as intended, or does
   the engine clamp it?),
-- the pickaxe's tag-based `minecraft:digger` entry — the tag query needs a recent
-  format version, and if the engine ignores it the pickaxe still mines everything
-  and still breaks bedrock, just without the speed boost,
-- rainbow ore actually generating (the feature rule needs no experiments on
-  1.21.50+; if nothing generates, that is the first thing to check),
+- whether **obsidian and ancient debris drop** when mined with the rainbow
+  pickaxe. The engine's `minecraft:diamond_tier_destructible` tag says those
+  blocks need a diamond-tier tool *to drop*, and a custom item has no tier. If
+  they break but give nothing, say so and they move to the script's own
+  break-and-drop list,
+- rainbow ore actually generating,
 - the unicorn's model and taming, and whether the crafted spawn egg links to it
   the way a vanilla egg does (the creative-menu egg is the fallback),
 - the particle and sound ids the traps use.

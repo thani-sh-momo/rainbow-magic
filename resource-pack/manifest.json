@@ -12,14 +12,14 @@
 		"description": "Textures for Rainbow Magic",
 		"min_engine_version": [
 			1,
-			21,
+			26,
 			50
 		],
 		"uuid": "d8c6e08f-adbf-4b82-a242-44aa79e4a376",
 		"version": [
 			1,
 			0,
-			3
+			4
 		]
 	},
 	"modules": [
@@ -29,7 +29,7 @@
 			"version": [
 				1,
 				0,
-				3
+				4
 			]
 		}
 	]

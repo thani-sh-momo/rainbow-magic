@@ -24,7 +24,7 @@ import {
  * Reported in the boot line, so the content log says which build is installed.
  * Bump it on every change that alters behaviour.
  */
-const BUILD = "1.0.3";
+const BUILD = "1.0.4";
 
 const TAG = "[RainbowMagic]";
 
@@ -662,24 +662,36 @@ try {
  * The Rainbow Glitter Unicorn
  * ------------------------------------------------------------------ */
 
-/** Long enough that a unicorn glows for a play session without being refreshed
- * every tick. Ticks. */
-const UNICORN_GLOW_TICKS = 1000000;
+/**
+ * How long the unicorn's blessing lasts. Long enough for a play session without
+ * being refreshed every tick. Ticks.
+ */
+const UNICORN_BLESSING_TICKS = 1000000;
+
+/**
+ * Bedrock effect ids the unicorn is given. Both must be Bedrock effects:
+ * "glowing" is a Java-only one, and asking for it throws
+ * InvalidArgumentError: Invalid type passed to argument [0]. tools/check-pack.py
+ * checks every name in this list against the Bedrock effect list, because a
+ * wrong name here is silent until an entity spawns.
+ */
+const UNICORN_EFFECTS = ["regeneration", "speed"];
+
+const UNICORN_EFFECT_OPTIONS = { amplifier: 0, showParticles: false };
 
 subscribe("entitySpawn", world?.afterEvents?.entitySpawn, (event) => {
 	if (event.entity?.typeId !== UNICORN) {
 		return;
 	}
-	// A glittering pet: the glow makes it easy to find once tamed, and the
-	// regeneration is what makes it kind rather than merely harmless.
-	try {
-		event.entity.addEffect("glowing", UNICORN_GLOW_TICKS, { showParticles: false });
-		event.entity.addEffect("regeneration", UNICORN_GLOW_TICKS, {
-			amplifier: 1,
-			showParticles: false,
-		});
-	} catch (err) {
-		log("could not bless the unicorn:", err);
+	// A kind, nimble pet: the regeneration is what makes it kind rather than
+	// merely harmless, and the speed is what keeps it with you. Each is applied
+	// on its own, so one failing does not cost the other.
+	for (const effect of UNICORN_EFFECTS) {
+		try {
+			event.entity.addEffect(effect, UNICORN_BLESSING_TICKS, UNICORN_EFFECT_OPTIONS);
+		} catch (err) {
+			log(`could not apply ${effect} to the unicorn:`, err);
+		}
 	}
 });
 
