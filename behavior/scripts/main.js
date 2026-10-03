@@ -24,7 +24,7 @@ import {
  * Reported in the boot line, so the content log says which build is installed.
  * Bump it on every change that alters behaviour.
  */
-const BUILD = "1.0.2";
+const BUILD = "1.0.3";
 
 const TAG = "[RainbowMagic]";
 
@@ -528,6 +528,63 @@ function fireTrap(trap, dimension, location, victims) {
 	log(`${spec.label} trap fired on ${victims.length} mob(s)`);
 }
 
+/** Every id this pack defines in the behaviour pack: reported on the first
+ * tick, so the log says whether the engine actually loaded them. */
+const ITEM_IDS = [
+	"rainbow_magic:rainbow_dust",
+	"rainbow_magic:rainbow_ingot",
+	"rainbow_magic:rainbow_blade",
+	"rainbow_magic:rainbow_pickaxe",
+	"rainbow_magic:rainbow_shears",
+	"rainbow_magic:trap_snare",
+	"rainbow_magic:trap_inferno",
+	"rainbow_magic:trap_levity",
+	"rainbow_magic:glitter_unicorn_spawn_egg",
+];
+
+const BLOCK_IDS = [
+	"rainbow_magic:rainbow_ore",
+	"rainbow_magic:deepslate_rainbow_ore",
+	"rainbow_magic:rainbow_block",
+];
+
+/**
+ * Reports which of this pack's own ids the engine actually knows.
+ *
+ * The script module can run even when the rest of the pack is unhappy, so "the
+ * script works" is not evidence that the items and blocks loaded. Asking the
+ * engine to resolve each id is the only runtime check available -- an unknown
+ * id throws -- and it splits "the pack loaded" from "the script loaded".
+ */
+function reportContent() {
+	const missing = [];
+	let items = 0;
+	for (const id of ITEM_IDS) {
+		try {
+			// Constructing an ItemStack resolves the type against the registry.
+			void new ItemStack(id, 1);
+			items += 1;
+		} catch (err) {
+			missing.push(id);
+		}
+	}
+
+	let blocks = 0;
+	for (const id of BLOCK_IDS) {
+		try {
+			void BlockPermutation.resolve(id);
+			blocks += 1;
+		} catch (err) {
+			missing.push(id);
+		}
+	}
+
+	log(
+		`content: items ${items}/${ITEM_IDS.length}, blocks ${blocks}/${BLOCK_IDS.length}` +
+			(missing.length ? `, MISSING ${missing.join(" ")}` : ""),
+	);
+}
+
 /** Set once the interval has run in a live world, so the "alive" line is a
  * heartbeat rather than a per-tick flood. */
 let announcedAlive = false;
@@ -551,6 +608,9 @@ function trapTick() {
 			// left as unreadable
 		}
 		log(`alive in the world at tick ${system.currentTick}, players=${players}`);
+		// Reported here rather than at boot: by the first tick everything the
+		// pack defines is registered, so a missing id means missing, not early.
+		reportContent();
 	}
 
 	if (armedTraps.length === 0) {

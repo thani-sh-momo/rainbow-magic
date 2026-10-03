@@ -141,7 +141,7 @@ the resource pack holds the textures. There is no script API toggle to flip, and
 
    ```json
    [
-     { "pack_id": "bc2a68d1-58da-4029-b56d-82538d854be0", "version": [1, 0, 2] }
+     { "pack_id": "bc2a68d1-58da-4029-b56d-82538d854be0", "version": [1, 0, 3] }
    ]
    ```
 
@@ -226,7 +226,7 @@ load. Everything below is one line in the content log per stage.
 Then look for lines starting `[RainbowMagic]`. A healthy load looks like this:
 
 ```text
-[RainbowMagic] build 1.0.2: script module loaded
+[RainbowMagic] build 1.0.3: script module loaded
 [RainbowMagic] afterEvents: entityHitBlock=ok entitySpawn=ok itemUse=ok ...
 [RainbowMagic] currentTick=0
 [RainbowMagic] overworld=minecraft:overworld
@@ -236,35 +236,49 @@ Then look for lines starting `[RainbowMagic]`. A healthy load looks like this:
 [RainbowMagic] subscribed: interval every 10 ticks
 [RainbowMagic] boot sequence complete
 [RainbowMagic] alive in the world at tick 10, players=1
+[RainbowMagic] content: items 9/9, blocks 3/3
 ```
 
 Read it like this:
 
 | What you see | What it means |
 | --- | --- |
-| **No `[RainbowMagic]` line at all** | The script module never ran. The problem is the manifest, the script module entry, or the `@minecraft/server` version — not the items, blocks or textures. Try the diagnostic build below. |
+| **No `[RainbowMagic]` line at all** | The script module never ran. The problem is the manifest, the script module entry, or the `@minecraft/server` version — not the items, blocks or textures. |
 | `build …` but no `boot sequence complete` | Something threw during setup; the line above it names what. |
 | `cannot subscribe to <event>` | This engine's script API has no such event, so that feature is off. The rest still runs. |
 | `<name> handler threw:` | A named handler failed at runtime, with the error and stack. |
 | Boot lines but **no** `alive in the world` | The script loaded but its tick loop never ran. |
+| `content: items 9/9, blocks 3/3` | The behaviour pack's data loaded and the engine knows every item and block. |
+| `content: … MISSING <id>` | The script loaded but those items or blocks did not register — a data problem, with the ids named. |
 
-### Bisecting with the no-script build
+The script can run while the rest of the pack does not, which is why "the
+script works" is not the same as "the pack loaded". The `content:` line is what
+separates them.
 
-`rainbow-magic-diagnostic-no-script.mcaddon` (in `dist/`, and attached to the
-release) is the same pack with the script module removed from the manifest — and
-its own pack uuid, so it can sit beside the real one. Import it and try again:
+### Bisecting the two packs
 
-- **It loads** → every item, block, recipe, ore, texture and the entity are
-  fine, and the failure is the script module or the `@minecraft/server` version
-  the manifest asks for.
-- **It does not load either** → the problem is in the pack's data, assets or
-  manifest, and the script is not involved.
+The release also carries the packs separately:
+`rainbow-magic-behavior.mcpack` and `rainbow-magic-resources.mcpack`. Installing
+one at a time says which pack is unhappy:
 
-### After changing a pack
+1. **Resources alone** on a fresh test world — if the load error still appears,
+   the resource pack is the problem and the behaviour pack is innocent.
+2. **Behaviour alone** — likewise the other way round.
 
-Minecraft matches a pack by uuid **and version**, so bump the version (this file
-documents `1.0.2`) or the world may keep using the copy it already has. If a
-pack misbehaves after an update, try removing it from the world and re-adding it.
+### When the pack "failed to load" with nothing in the content log
+
+That message with an empty log usually means Minecraft could not find the pack
+version the world is asking for, rather than a fault in the pack's files. Each
+time this add-on is rebuilt its version goes up (this file documents `1.0.3`),
+and a world remembers the exact uuid **and** version it was given:
+
+- **Test in a brand-new world** first. If it loads there, nothing is wrong with
+  the pack and the old world is holding a stale reference.
+- Otherwise **remove both packs from the world and add them again**, so the
+  world records the current version.
+- On a dedicated server, check `worlds/<level-name>/world_behavior_packs.json`
+  and `world_resource_packs.json` name the version in each `manifest.json`
+  (`[1, 0, 3]` for this build).
 
 ## Contributing
 

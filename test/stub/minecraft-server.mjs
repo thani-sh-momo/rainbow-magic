@@ -48,6 +48,8 @@ export const state = {
 	currentTick: 0,
 	/** Dimensions whose getEntities() throws */
 	entityQueryFails: false,
+	/** Ids this engine does not know, so a probe can report them missing */
+	unknownIds: [],
 };
 
 export function reset() {
@@ -66,6 +68,7 @@ export function reset() {
 	state.intervals = [];
 	state.currentTick = 0;
 	state.entityQueryFails = false;
+	state.unknownIds = [];
 }
 
 export class ItemStack {
@@ -74,6 +77,10 @@ export class ItemStack {
 		// add-on's drop is allowed to fail on.
 		if (unspawnable.has(typeId)) {
 			throw new Error(`no item form for ${typeId}`);
+		}
+		// An id the engine does not know behaves the same way to a caller.
+		if (state.unknownIds.includes(typeId)) {
+			throw new Error(`unknown item type ${typeId}`);
 		}
 		this.typeId = typeId;
 		this.amount = amount;
@@ -94,7 +101,12 @@ export const unspawnable = new Set([
 export const EquipmentSlot = { Mainhand: "Mainhand" };
 
 export const BlockPermutation = {
-	resolve: (typeId) => ({ typeId }),
+	resolve: (typeId) => {
+		if (state.unknownIds.includes(typeId)) {
+			throw new Error(`unknown block type ${typeId}`);
+		}
+		return { typeId };
+	},
 };
 
 export const system = {

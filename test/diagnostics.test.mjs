@@ -125,6 +125,45 @@ describe("a handler that throws", () => {
 	});
 });
 
+describe("the content probe", () => {
+	test("it reports every id the engine knows", async () => {
+		await loadAddon();
+
+		const lines = capture(() => tick());
+
+		assert.ok(
+			logged(lines, "content: items 9/9, blocks 3/3"),
+			`expected a clean content report, got: ${lines.join("\n")}`,
+		);
+		assert.equal(logged(lines, "MISSING"), false);
+	});
+
+	test("it names each id the engine does not have", async () => {
+		await loadAddon();
+		// What a pack looks like when its data module never registered: the
+		// script still runs, so this is the only way to tell from inside.
+		state.unknownIds = ["rainbow_magic:rainbow_blade", "rainbow_magic:rainbow_ore"];
+
+		const lines = capture(() => tick());
+
+		assert.ok(logged(lines, "items 8/9"), lines.join("\n"));
+		assert.ok(logged(lines, "blocks 2/3"), lines.join("\n"));
+		assert.ok(
+			logged(lines, "MISSING rainbow_magic:rainbow_blade rainbow_magic:rainbow_ore"),
+			lines.join("\n"),
+		);
+	});
+
+	test("it is reported once, with the heartbeat", async () => {
+		await loadAddon();
+		capture(() => tick());
+
+		const later = capture(() => tick());
+
+		assert.equal(logged(later, "content:"), false);
+	});
+});
+
 describe("liveness", () => {
 	test("the first tick proves the script is running inside the world", async () => {
 		await loadAddon();
