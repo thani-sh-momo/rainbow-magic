@@ -214,6 +214,17 @@ for identifier, path in blocks.items():
         if texture not in terrain_textures:
             complain(f"{relative(path)}: texture '{texture}' is not in terrain_texture.json")
 
+    # A BLOCK's minecraft:tags is a plain array; an ITEM's is an object with a
+    # tags key. Getting that backwards is silently ignored.
+    block_tags = components.get("minecraft:tags")
+    if block_tags is not None and not (
+        isinstance(block_tags, list) and all(isinstance(tag, str) for tag in block_tags)
+    ):
+        complain(
+            f"{relative(path)}: a block's minecraft:tags is an array of strings -- the item form "
+            f"(an object with a tags key) is not valid here"
+        )
+
 for identifier, path in items.items():
     document = load(path)
     section = document["minecraft:item"]
@@ -231,6 +242,17 @@ for identifier, path in items.items():
                     f"file declares {document['format_version']} -- the descriptor is accepted but "
                     f"matches nothing, so the item mines nothing at all"
                 )
+
+    # Every canonical "is this item a pickaxe" test in the documentation pairs
+    # minecraft:is_tool with the tool tag. Without is_tool the engine does not
+    # treat the item as a tool at all: blocks break and nothing is harvested,
+    # which reads as "it breaks but does not mine".
+    tool_tags = section["components"].get("minecraft:tags", {}).get("tags", [])
+    if "minecraft:is_tool" not in tool_tags:
+        complain(
+            f"{relative(path)}: a digger must declare the minecraft:is_tool tag as well as its tool "
+            f"tag, or the engine breaks blocks without harvesting them -- has {tool_tags}"
+        )
 
 # --------------------------------------------------------------------------- #
 # recipes

@@ -63,6 +63,17 @@ first play-test found. `rainbow_pickaxe.json` therefore declares `1.26.50`, whic
 is why the pack's `min_engine_version` is `1.26.50` and not lower.
 `tools/check-pack.py` fails any tag descriptor below that version.
 
+**A digger also needs `minecraft:is_tool`.** The item carries
+`{"tags": ["minecraft:is_tool", "minecraft:is_pickaxe", "minecraft:diamond_tier"]}`.
+Every canonical "is this a pickaxe" test in the documentation pairs `is_tool` with
+the tool tag — an item tagged `is_pickaxe` alone is not treated as a tool at all,
+so blocks **break and nothing is harvested**, which is what "it breaks but does
+not mine" turned out to mean.
+
+The pack's own blocks carry `minecraft:is_pickaxe_item_destructible` for the same
+reason: a block without it is not pickaxe-destructible, so the digger's tag
+descriptor never matches it either.
+
 ### Supershears
 
 Shearing is a script interaction (`playerInteractWithEntity`). A mob with its own
@@ -154,7 +165,7 @@ clear version error rather than loading a pickaxe that cannot mine.
 
    ```json
    [
-     { "pack_id": "bc2a68d1-58da-4029-b56d-82538d854be0", "version": [1, 0, 6] }
+     { "pack_id": "bc2a68d1-58da-4029-b56d-82538d854be0", "version": [1, 0, 7] }
    ]
    ```
 
@@ -218,6 +229,7 @@ reverting them one at a time.
 | Play-testing | The pickaxe still mined nothing: `tag:minecraft:is_pickaxe` is old syntax and the current schema rejects the item, dropping **every** component on it | no component key may start with `tag:`, and `minecraft:tags` must be an object with a `tags` array |
 | Reading vanilla's own `diamond_spear.json` | `minecraft:damage` was a bare number where vanilla writes an object | `minecraft:damage` must be `{"value": <int>}` |
 | Play-testing | `animation.horse.v3.look_at_player` spammed the log: `query.head_y_rotation` is accepted only on vanilla horse-family types | a custom entity must not reference that animation |
+| Play-testing | The pickaxe broke blocks but **harvested nothing**: the item declared `minecraft:is_pickaxe` and `minecraft:diamond_tier` but not `minecraft:is_tool`, so the engine never treated it as a tool | an item with a `minecraft:digger` must declare `minecraft:is_tool`; a block's `minecraft:tags` must be an array, not the item's object form |
 
 **Still not verified**, because the engine owns these — worth a look in play:
 
@@ -250,7 +262,7 @@ load. Everything below is one line in the content log per stage.
 Then look for lines starting `[RainbowMagic]`. A healthy load looks like this:
 
 ```text
-[RainbowMagic] build 1.0.6: script module loaded
+[RainbowMagic] build 1.0.7: script module loaded
 [RainbowMagic] afterEvents: entityHitBlock=ok entitySpawn=ok itemUse=ok ...
 [RainbowMagic] currentTick=0
 [RainbowMagic] overworld=minecraft:overworld
@@ -321,7 +333,7 @@ installing one at a time says which pack is unhappy.
 
 **Versions.** A world records a pack's uuid **and version**; an unchanged version
 after a rebuild can leave the world using the copy it already has, so the
-version in `manifest.json` (this file documents `1.0.6`) is what
+version in `manifest.json` (this file documents `1.0.7`) is what
 `world_behavior_packs.json` and `world_resource_packs.json` must name. Version
 bumps are for content changes only — a documentation change does not need one,
 and bumping needlessly makes a world's stored reference go stale.

@@ -16,6 +16,7 @@
 			"minecraft:hand_equipped": true,
 			"minecraft:tags": {
 				"tags": [
+					"minecraft:is_tool",
 					"minecraft:is_pickaxe",
 					"minecraft:diamond_tier"
 				]

@@ -24,7 +24,7 @@ import {
  * Reported in the boot line, so the content log says which build is installed.
  * Bump it on every change that alters behaviour.
  */
-const BUILD = "1.0.6";
+const BUILD = "1.0.7";
 
 const TAG = "[RainbowMagic]";
 
