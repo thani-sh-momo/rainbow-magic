@@ -265,20 +265,42 @@ one at a time says which pack is unhappy:
    the resource pack is the problem and the behaviour pack is innocent.
 2. **Behaviour alone** — likewise the other way round.
 
-### When the pack "failed to load" with nothing in the content log
+### "At least one of your behaviour or resource packs failed to load" with an empty log
 
-That message with an empty log usually means Minecraft could not find the pack
-version the world is asking for, rather than a fault in the pack's files. Each
-time this add-on is rebuilt its version goes up (this file documents `1.0.3`),
-and a world remembers the exact uuid **and** version it was given:
+**Check this before touching the pack: it is a known Bedrock bug that fires with
+no packs installed at all.** Mojira **MCPE-241656** is Confirmed and reviewed by
+Mojang's triage team: the message appears when loading a world, during play, and
+"even after a clean installation with no active packs", on 26.50 and later —
+*"No actual pack loading failure is observed; worlds load and run normally
+except for this persistent chat warning."* **MCPE-242853** reports the same on a
+26.51 fresh world with no custom packs. A commenter on the report puts it
+plainly: *"I keep getting it, only to find that the packs I'm using are working
+just fine."*
 
-- **Test in a brand-new world** first. If it loads there, nothing is wrong with
-  the pack and the old world is holding a stale reference.
-- Otherwise **remove both packs from the world and add them again**, so the
-  world records the current version.
-- On a dedicated server, check `worlds/<level-name>/world_behavior_packs.json`
-  and `world_resource_packs.json` name the version in each `manifest.json`
-  (`[1, 0, 3]` for this build).
+The 30-second test that separates the bug from a real fault:
+
+1. Create a fresh world and enable **no packs at all**. If the message appears
+   anyway, it is the engine's bug and says nothing about this add-on.
+2. Then check the add-on for **real** symptoms rather than the message — in
+   creative, search `Rainbow`: all nine items should be there with their proper
+   rainbow art. A checkerboard or missing texture means the resource pack really
+   did not load. Build a rainbow block and place it; the ore art is the same
+   test for blocks.
+
+A pack that genuinely failed also leaves pack-validation lines in the content
+log (`[Item]`, `[Texture]`, `[Recipes]`) — that is how the first two schema
+errors in this add-on were found. Silence plus this message is the bug.
+
+If it *is* a real fault, and only then: the release carries the packs separately
+(`rainbow-magic-behavior.mcpack`, `rainbow-magic-resources.mcpack`), so
+installing one at a time says which pack is unhappy.
+
+**Versions.** A world records a pack's uuid **and version**; an unchanged version
+after a rebuild can leave the world using the copy it already has, so the
+version in `manifest.json` (this file documents `1.0.3`) is what
+`world_behavior_packs.json` and `world_resource_packs.json` must name. Version
+bumps are for content changes only — a documentation change does not need one,
+and bumping needlessly makes a world's stored reference go stale.
 
 ## Contributing
 
