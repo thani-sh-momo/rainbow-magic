@@ -593,6 +593,27 @@ item icons, downscale everything to its pack size (item icons 16×16, block tile
 16×16, armour layers 64×32, unicorn 64×64, pack icons 128×128), map the three UV
 sheets and stamp the unicorn's eyes and horn at the right coordinates.
 
+## What actually happened, once this art was generated
+
+`tools/import-art.py` does the keying and resizing, and is re-runnable when new
+art arrives. Three things worth recording for next time:
+
+- **The keying held up.** The vision check found plain white backgrounds, no drop
+  shadows and no cut-offs on all sixteen icons, so the flood fill produced no
+  leftover white and no clipping. One pixel of dark outline is added to each
+  silhouette in the same colour the hand-drawn sprites use — not for looks: the
+  levity trap came back nearly white and would otherwise vanish against the
+  inventory's own light background.
+- **`rainbow_block` needed mending.** It came back with a beveled frame around the
+  face, which reads as a grid line on every block once it tiles. The importer crops
+  the outer 9% of each edge before resizing, and the 6×6 tiled test is clean.
+- **The unicorn's eyes and horn were not stamped.** The unicorn reuses the vanilla
+  horse model, so its texture is a UV map and the generator cannot place features
+  on it — and the model has no horn geometry at all. The fur sheet is mapped as a
+  wash, which is exactly what the previous texture was, so nothing regressed: the
+  pet is still eyeless. Giving it eyes and a horn means a model pass, not an art
+  pass, and that has not been done.
+
 Two things worth saying before you spend generations on it:
 
 - **The block tiles and the UV sheets are the parts that will need my hand

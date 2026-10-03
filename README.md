@@ -27,10 +27,12 @@ wears, not a picture of the animal.*
 | **Magical Traps** ×3 | Consumable traps that arm the ground you are standing on and fire at the first mob to walk onto it. |
 | **Rainbow Glitter Unicorn** | A kind, glowing pet. Feed it a Rainbow Ingot to tame it. |
 
-> **The seven newest icons are placeholders.** The axe, shovel, hoe and the four
-> armour pieces use stand-in art that only needs to be present and tell them apart
-> in the inventory — the real icons are a separate design pass. Everything else in
-> the pack is drawn properly.
+> **The art is generated, then imported.** All 24 images come from the prompts in
+> [`docs/ART-PROMPTS.md`](docs/ART-PROMPTS.md) and are brought into the pack by
+> [`tools/import-art.py`](tools/import-art.py), which keys the icons out of their
+> white background and downsizes everything to the size the pack expects.
+> `tools/make-textures.py` draws stand-ins for a fresh checkout and will not
+> overwrite imported art unless you pass `--force`.
 
 ## How it works
 
@@ -194,7 +196,8 @@ clear version error rather than loading a pickaxe that cannot mine.
 
 ```bash
 python3 tools/build-addon.py     # writes dist/*.mcpack and dist/*.mcaddon
-python3 tools/make-textures.py   # redraws every texture and docs/preview.png
+python3 tools/import-art.py DIR  # brings a folder of generated art into the pack
+python3 tools/make-textures.py   # redraws stand-in textures (needs --force to replace art)
 ```
 
 ## Tests
@@ -288,7 +291,7 @@ load. Everything below is one line in the content log per stage.
 Then look for lines starting `[RainbowMagic]`. A healthy load looks like this:
 
 ```text
-[RainbowMagic] build 1.0.8: script module loaded
+[RainbowMagic] build 1.0.9: script module loaded
 [RainbowMagic] afterEvents: entityHitBlock=ok entitySpawn=ok itemUse=ok ...
 [RainbowMagic] currentTick=0
 [RainbowMagic] overworld=minecraft:overworld
@@ -359,7 +362,7 @@ installing one at a time says which pack is unhappy.
 
 **Versions.** A world records a pack's uuid **and version**; an unchanged version
 after a rebuild can leave the world using the copy it already has, so the
-version in `manifest.json` (this file documents `1.0.8`) is what
+version in `manifest.json` (this file documents `1.0.9`) is what
 `world_behavior_packs.json` and `world_resource_packs.json` must name. Version
 bumps are for content changes only — a documentation change does not need one,
 and bumping needlessly makes a world's stored reference go stale.
