@@ -172,6 +172,28 @@ for identifier, path in items.items():
     if icon not in item_textures:
         complain(f"{relative(path)}: icon '{icon}' is not in item_texture.json")
 
+    # Old-syntax component keys are not in the current schema, and ONE bad key
+    # rejects the whole item: every component on it is dropped, which is how the
+    # pickaxe ended up with no digger and could not mine anything.
+    for key in components:
+        if key.startswith("tag:"):
+            complain(
+                f"{relative(path)}: component '{key}' is the old item-tag syntax and is not in the "
+                f"schema -- one bad key discards every component on the item; use minecraft:tags "
+                f"with a tags array instead"
+            )
+
+    damage = components.get("minecraft:damage")
+    if damage is not None and not isinstance(damage, dict):
+        complain(
+            f"{relative(path)}: minecraft:damage must be an object like "
+            f'{{"value": <int>}}, not a bare {type(damage).__name__} -- vanilla writes the object form'
+        )
+
+    tags = components.get("minecraft:tags")
+    if tags is not None and not (isinstance(tags, dict) and isinstance(tags.get("tags"), list)):
+        complain(f"{relative(path)}: minecraft:tags must be an object with a tags array")
+
 for identifier, path in blocks.items():
     section = load(path)["minecraft:block"]
     components = section["components"]

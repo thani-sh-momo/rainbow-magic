@@ -29,8 +29,9 @@ wears, not a picture of the animal.*
 
 ### The blade, and why nothing wears out
 
-The blade carries `"minecraft:damage": 100`, so the engine adds 100 to the
-player's own attack — that is data, straight from the item file.
+The blade carries `"minecraft:damage": {"value": 100}`, so the engine adds 100 to
+the player's own attack — that is data, straight from the item file. The object
+form is the one vanilla uses (`{"value": <int>}`); a bare number is not.
 
 Nothing in the pack has a `minecraft:durability` component **at all**. That is
 what makes the blade, the pickaxe and the shears unbreakable: an item with no
@@ -153,7 +154,7 @@ clear version error rather than loading a pickaxe that cannot mine.
 
    ```json
    [
-     { "pack_id": "bc2a68d1-58da-4029-b56d-82538d854be0", "version": [1, 0, 3] }
+     { "pack_id": "bc2a68d1-58da-4029-b56d-82538d854be0", "version": [1, 0, 5] }
    ]
    ```
 
@@ -214,6 +215,8 @@ reverting them one at a time.
 | Play-testing | The ore and every custom block rendered as the missing-texture placeholder | a block must declare `minecraft:geometry`, and its texture shortname must be namespaced and present in `terrain_texture.json` |
 | Play-testing | The pickaxe mined nothing at all | a tag descriptor in `destroy_speeds` requires `format_version` 1.26.20+ |
 | Play-testing | `addEffect("glowing", …)` threw `InvalidArgumentError` | every effect name must be a Bedrock effect |
+| Play-testing | The pickaxe still mined nothing: `tag:minecraft:is_pickaxe` is old syntax and the current schema rejects the item, dropping **every** component on it | no component key may start with `tag:`, and `minecraft:tags` must be an object with a `tags` array |
+| Reading vanilla's own `diamond_spear.json` | `minecraft:damage` was a bare number where vanilla writes an object | `minecraft:damage` must be `{"value": <int>}` |
 
 **Still not verified**, because the engine owns these — worth a look in play:
 
@@ -246,7 +249,7 @@ load. Everything below is one line in the content log per stage.
 Then look for lines starting `[RainbowMagic]`. A healthy load looks like this:
 
 ```text
-[RainbowMagic] build 1.0.3: script module loaded
+[RainbowMagic] build 1.0.5: script module loaded
 [RainbowMagic] afterEvents: entityHitBlock=ok entitySpawn=ok itemUse=ok ...
 [RainbowMagic] currentTick=0
 [RainbowMagic] overworld=minecraft:overworld
@@ -317,7 +320,7 @@ installing one at a time says which pack is unhappy.
 
 **Versions.** A world records a pack's uuid **and version**; an unchanged version
 after a rebuild can leave the world using the copy it already has, so the
-version in `manifest.json` (this file documents `1.0.3`) is what
+version in `manifest.json` (this file documents `1.0.5`) is what
 `world_behavior_packs.json` and `world_resource_packs.json` must name. Version
 bumps are for content changes only — a documentation change does not need one,
 and bumping needlessly makes a world's stored reference go stale.
