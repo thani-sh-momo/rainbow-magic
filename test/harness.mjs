@@ -17,6 +17,7 @@ export {
 	placeMobs,
 	player,
 	raiseSpawn,
+	raiseWorldLoad,
 	swingAt,
 	tick,
 	useItem,
@@ -24,10 +25,49 @@ export {
 
 let instances = 0;
 
-/** Load a fresh copy of the add-on. */
-export async function loadAddon() {
+/** Runs `fn` with the console captured, returning what it logged.
+ *
+ * The add-on reports what it is doing to the content log; capturing it keeps
+ * the test output readable and lets a test assert on the diagnostics
+ * themselves.
+ */
+export function capture(fn) {
+	const lines = [];
+	const realLog = console.log;
+	const realWarn = console.warn;
+	console.log = (...args) => lines.push(args.join(" "));
+	console.warn = (...args) => lines.push(args.join(" "));
+	try {
+		fn();
+	} finally {
+		console.log = realLog;
+		console.warn = realWarn;
+	}
+	return lines;
+}
+
+/**
+ * Load a fresh copy of the add-on, capturing the boot sequence.
+ *
+ * `missingEvents` names events this engine should not have, so the tests can
+ * reproduce an older script API.
+ */
+export async function loadAddon({ missingEvents = [] } = {}) {
 	reset();
-	await import(`../behavior/scripts/main.js?instance=${(instances += 1)}`);
+	state.missingEvents = missingEvents;
+
+	let lines = [];
+	const realLog = console.log;
+	const realWarn = console.warn;
+	console.log = (...args) => lines.push(args.join(" "));
+	console.warn = (...args) => lines.push(args.join(" "));
+	try {
+		await import(`../behavior/scripts/main.js?instance=${(instances += 1)}`);
+	} finally {
+		console.log = realLog;
+		console.warn = realWarn;
+	}
+	return lines;
 }
 
 export const RAINBOW_BLADE = "rainbow_magic:rainbow_blade";

@@ -7,7 +7,7 @@
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 
-import { UNICORN, entity, loadAddon, raiseSpawn, state } from "./harness.mjs";
+import { capture, UNICORN, entity, loadAddon, raiseSpawn, state } from "./harness.mjs";
 
 describe("the unicorn on spawn", () => {
 	test("it glitters and it is kind", async () => {
@@ -49,7 +49,9 @@ describe("the unicorn on spawn", () => {
 			throw new Error("the entity is not ready for effects yet");
 		};
 
-		raiseSpawn(broken);
+		// The failure is expected here, so its log line is captured rather than
+		// left in the test output.
+		capture(() => raiseSpawn(broken));
 		raiseSpawn(entity({ typeId: UNICORN }));
 
 		assert.equal(state.effects.length, 2, "the next unicorn still gets its effects");

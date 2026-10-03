@@ -96,11 +96,19 @@ for pack in ("behavior", "resource-pack"):
 
 behavior_manifest = load(os.path.join(BEHAVIOR, "manifest.json"))
 resource_header = load(os.path.join(RESOURCES, "manifest.json"))["header"]
-linked = [dep for dep in behavior_manifest["dependencies"] if "uuid" in dep]
-if not linked or linked[0]["uuid"] != resource_header["uuid"]:
-    complain("the behavior pack does not depend on the resource pack's header uuid")
-elif linked[0]["version"] != resource_header["version"]:
-    complain("the behavior pack depends on a different resource pack version")
+
+# This pack deliberately does NOT depend on the resource pack's uuid. The link
+# would only auto-enable the resource pack, which the player enables for the
+# world anyway -- while an unmet pack dependency is a silent refusal to load,
+# which is exactly the failure this pack spent a release chasing. If such a
+# dependency is ever added back, it must match the resource pack's header.
+for dependency in behavior_manifest["dependencies"]:
+    if "uuid" not in dependency:
+        continue
+    if dependency["uuid"] != resource_header["uuid"]:
+        complain("the behavior pack depends on a uuid that is not the resource pack's header")
+    elif dependency["version"] != resource_header["version"]:
+        complain("the behavior pack depends on a different resource pack version")
 
 # --------------------------------------------------------------------------- #
 # items -> textures, and blocks -> textures

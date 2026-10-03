@@ -7,28 +7,47 @@ import {
 } from "@minecraft/server";
 
 /**
- * Rainbow Magic -- the scripted behaviour.
+ * Rainbow Magic -- the scripted behaviour, and its own diagnostics.
  *
- * Only three things need script, and each is something the data files cannot
- * express:
- *   - the rainbow pickaxe breaking the handful of blocks no vanilla tool can
- *     touch (bedrock and friends) -- every other block goes through the
- *     pickaxe's own `minecraft:digger` speeds;
- *   - supershears, which shear any mob rather than the vanilla few;
- *   - the magical traps, which are consumable items that arm the ground where
- *     you stand and fire when a mob walks onto the spot.
+ * A script module that throws while it loads takes the whole pack down with it
+ * and says nothing: the content log stays empty and the only symptom is a pack
+ * that will not load. So this file announces itself, guards every subscription,
+ * and wraps every handler, which turns "it does not load" into a line in the
+ * content log naming the stage that failed.
  *
- * Everything else is data: the blade's 100 damage is `minecraft:damage`, the
- * tools never break because they carry no `minecraft:durability` component at
- * all, the ore is a feature rule, and the unicorn's taming is the entity's own
- * `minecraft:tameable` component. Nothing here repeats those.
+ * The logging is deliberately front-loaded and quiet afterwards: the boot
+ * sequence, one line when the world is live, and a line whenever something
+ * throws. Nothing logs per swing or per trap tick, or the log would be useless.
  */
+
+/**
+ * Reported in the boot line, so the content log says which build is installed.
+ * Bump it on every change that alters behaviour.
+ */
+const BUILD = "1.0.2";
+
+const TAG = "[RainbowMagic]";
 
 const BLADE = "rainbow_magic:rainbow_blade";
 const PICKAXE = "rainbow_magic:rainbow_pickaxe";
 const SHEARS = "rainbow_magic:rainbow_shears";
 const UNICORN = "rainbow_magic:glitter_unicorn";
 const DUST = "rainbow_magic:rainbow_dust";
+
+/**
+ * Logging goes through `console.warn` rather than `console.log`: on a dedicated
+ * server both land in the content log, but only one of them is visible with the
+ * default content-log settings, and a diagnostic nobody sees is not a
+ * diagnostic. Every call is itself guarded -- logging must never be the thing
+ * that breaks the pack.
+ */
+function log(message, ...rest) {
+	try {
+		console.warn(`${TAG} ${message}`, ...rest);
+	} catch (err) {
+		// Nothing left to do: the engine has taken the console away.
+	}
+}
 
 /**
  * Blocks no tool can break: the engine refuses them to every vanilla pickaxe
@@ -161,8 +180,109 @@ function tell(player, message) {
 	try {
 		player.onScreenDisplay.setActionBar(message);
 	} catch (err) {
-		console.log("RainbowMagic:", message);
+		log(message);
 	}
+}
+
+/* ------------------------------------------------------------------ *
+ * Wiring, with everything that can fail on its own say so
+ * ------------------------------------------------------------------ */
+
+/**
+ * Wraps a handler so anything it throws is logged with the handler's name.
+ *
+ * Without this an exception inside an event handler is invisible: the content
+ * log stays empty, the feature quietly stops working, and the pack looks fine.
+ */
+function guard(name, handler) {
+	return (event) => {
+		try {
+			handler(event);
+		} catch (err) {
+			log(`${name} handler threw:`, err, err?.stack ?? "");
+		}
+	};
+}
+
+/**
+ * Subscribes to an event, announcing the outcome either way.
+ *
+ * Registered handlers are the pipeline for everything else in this file, so a
+ * subscription that silently does not take is worth a line: it is the
+ * difference between "the feature is broken" and "the event does not exist in
+ * this engine's script API version".
+ */
+function subscribe(name, signal, handler) {
+	if (!signal || typeof signal.subscribe !== "function") {
+		log(`cannot subscribe to ${name}: this engine has no such event`);
+		return;
+	}
+	try {
+		signal.subscribe(guard(name, handler));
+		log(`subscribed: ${name}`);
+	} catch (err) {
+		log(`subscribing to ${name} failed:`, err);
+	}
+}
+
+/**
+ * Reports what this engine's script API actually offers.
+ *
+ * This is the line that separates the two ways a pack like this fails: if the
+ * boot line and these appear, the script module loaded and the failure is
+ * elsewhere in the pack; if nothing appears at all, the module never ran and
+ * the problem is the manifest, the script module entry, or the
+ * `@minecraft/server` version the manifest asks for.
+ */
+function reportEngineSurface() {
+	const events = [
+		"entityHitBlock",
+		"entitySpawn",
+		"itemUse",
+		"playerInteractWithBlock",
+		"playerInteractWithEntity",
+		"worldLoad",
+	];
+
+	const found = [];
+	for (const name of events) {
+		let available = false;
+		try {
+			available = typeof world?.afterEvents?.[name]?.subscribe === "function";
+		} catch (err) {
+			available = false;
+		}
+		found.push(`${name}=${available ? "ok" : "MISSING"}`);
+	}
+	log(`afterEvents: ${found.join(" ")}`);
+
+	try {
+		log(`currentTick=${system.currentTick}`);
+	} catch (err) {
+		log("currentTick unreadable:", err);
+	}
+
+	try {
+		log(`overworld=${world.getDimension("minecraft:overworld").id}`);
+	} catch (err) {
+		log("getDimension threw:", err);
+	}
+
+	try {
+		log(`players=${world.getAllPlayers().length}`);
+	} catch (err) {
+		log("getAllPlayers threw:", err);
+	}
+}
+
+// The whole boot is one try/catch: a throw anywhere in here takes the module
+// down, and a module that throws while loading is exactly the silent failure
+// this file is trying to make visible.
+try {
+	log(`build ${BUILD}: script module loaded`);
+	reportEngineSurface();
+} catch (err) {
+	log("boot diagnostics threw:", err, err?.stack ?? "");
 }
 
 /* ------------------------------------------------------------------ *
@@ -184,7 +304,7 @@ function breakUnbreakable(player, block) {
 	try {
 		block.setPermutation(BlockPermutation.resolve("minecraft:air"));
 	} catch (err) {
-		console.log("RainbowMagic: could not break", typeId, err);
+		log(`could not break ${typeId}:`, err);
 		return;
 	}
 
@@ -202,10 +322,10 @@ function breakUnbreakable(player, block) {
 		// sound ids vary by version
 	}
 
-	console.log("RainbowMagic: rainbow pickaxe broke", typeId);
+	log(`pickaxe broke ${typeId}`);
 }
 
-world.afterEvents.entityHitBlock.subscribe((event) => {
+subscribe("entityHitBlock", world?.afterEvents?.entityHitBlock, (event) => {
 	const player = event.damagingEntity;
 	if (!isPlayer(player)) {
 		return;
@@ -222,9 +342,6 @@ world.afterEvents.entityHitBlock.subscribe((event) => {
 	breakUnbreakable(player, block);
 	// Durability is never spent here: the pickaxe has no
 	// `minecraft:durability` component, so it cannot wear out.
-	if (heldItem(player)?.typeId !== PICKAXE) {
-		tell(player, "The rainbow pickaxe is gone -- that was not it.");
-	}
 });
 
 /* ------------------------------------------------------------------ *
@@ -258,7 +375,7 @@ function shearTarget(player, target) {
 			target.location,
 		);
 	} catch (err) {
-		console.log("RainbowMagic: shear drop failed for", target.typeId, err);
+		log(`shear drop failed for ${target.typeId}:`, err);
 		return;
 	}
 
@@ -268,10 +385,10 @@ function shearTarget(player, target) {
 		// sound ids vary by version
 	}
 
-	console.log("RainbowMagic: sheared", target.typeId, "->", drop.item);
+	log(`sheared ${target.typeId} -> ${drop.item}`);
 }
 
-world.afterEvents.playerInteractWithEntity.subscribe((event) => {
+subscribe("playerInteractWithEntity", world?.afterEvents?.playerInteractWithEntity, (event) => {
 	if (heldItem(event.player)?.typeId !== SHEARS) {
 		return;
 	}
@@ -326,7 +443,7 @@ function armTrap(player, typeId) {
 
 	consumeOne(player, typeId);
 	tell(player, `${TRAPS[typeId].label} trap armed. Walk away.`);
-	console.log("RainbowMagic: armed", typeId, "at", dimensionId, location.y);
+	log(`armed ${typeId} at ${dimensionId} ${location.y}`);
 }
 
 /** Takes one of `typeId` out of the player's hand, clearing the slot when it
@@ -346,18 +463,18 @@ function consumeOne(player, typeId) {
 			equipment.setEquipment(EquipmentSlot.Mainhand, undefined);
 		}
 	} catch (err) {
-		console.log("RainbowMagic: could not consume the trap item", err);
+		log("could not consume the trap item:", err);
 	}
 }
 
-world.afterEvents.playerInteractWithBlock.subscribe((event) => {
+subscribe("playerInteractWithBlock", world?.afterEvents?.playerInteractWithBlock, (event) => {
 	const typeId = heldItem(event.player)?.typeId;
 	if (TRAPS[typeId]) {
 		armTrap(event.player, typeId);
 	}
 });
 
-world.afterEvents.itemUse.subscribe((event) => {
+subscribe("itemUse", world?.afterEvents?.itemUse, (event) => {
 	const typeId = event.itemStack?.typeId;
 	if (TRAPS[typeId] && isPlayer(event.source)) {
 		armTrap(event.source, typeId);
@@ -393,7 +510,7 @@ function fireTrap(trap, dimension, location, victims) {
 			}
 			spec.apply(victim);
 		} catch (err) {
-			console.log("RainbowMagic: trap had no effect on", victim.typeId, err);
+			log(`trap had no effect on ${victim.typeId}:`, err);
 		}
 	}
 
@@ -408,14 +525,34 @@ function fireTrap(trap, dimension, location, victims) {
 		// sound ids vary by version
 	}
 
-	console.log("RainbowMagic:", spec.label, "trap fired on", victims.length, "mob(s)");
+	log(`${spec.label} trap fired on ${victims.length} mob(s)`);
 }
+
+/** Set once the interval has run in a live world, so the "alive" line is a
+ * heartbeat rather than a per-tick flood. */
+let announcedAlive = false;
 
 /**
  * Watches every armed trap. A trap fires at the first mob to step on it and is
  * spent; the owner and the unicorn are ignored.
+ *
+ * This interval doubles as the liveness check: the first time it runs, the
+ * script proves it is executing inside a real world, not merely loading. If
+ * the boot line appears and this one never does, the script loaded but its
+ * tick loop never ran.
  */
-system.runInterval(() => {
+function trapTick() {
+	if (!announcedAlive) {
+		announcedAlive = true;
+		let players = "unreadable";
+		try {
+			players = String(world.getAllPlayers().length);
+		} catch (err) {
+			// left as unreadable
+		}
+		log(`alive in the world at tick ${system.currentTick}, players=${players}`);
+	}
+
 	if (armedTraps.length === 0) {
 		return;
 	}
@@ -440,7 +577,7 @@ system.runInterval(() => {
 				excludeTypes: ["minecraft:player", UNICORN],
 			});
 		} catch (err) {
-			console.log("RainbowMagic: trap scan failed:", err);
+			log("trap scan failed:", err);
 			continue;
 		}
 
@@ -452,7 +589,14 @@ system.runInterval(() => {
 		fireTrap(trap, dimension, location, victims);
 		armedTraps.splice(index, 1);
 	}
-}, TRAP_TICK_INTERVAL);
+}
+
+try {
+	system.runInterval(guard("trapTick", trapTick), TRAP_TICK_INTERVAL);
+	log(`subscribed: interval every ${TRAP_TICK_INTERVAL} ticks`);
+} catch (err) {
+	log("could not start the trap interval:", err);
+}
 
 /* ------------------------------------------------------------------ *
  * The Rainbow Glitter Unicorn
@@ -462,7 +606,7 @@ system.runInterval(() => {
  * every tick. Ticks. */
 const UNICORN_GLOW_TICKS = 1000000;
 
-world.afterEvents.entitySpawn.subscribe((event) => {
+subscribe("entitySpawn", world?.afterEvents?.entitySpawn, (event) => {
 	if (event.entity?.typeId !== UNICORN) {
 		return;
 	}
@@ -475,6 +619,16 @@ world.afterEvents.entitySpawn.subscribe((event) => {
 			showParticles: false,
 		});
 	} catch (err) {
-		console.log("RainbowMagic: could not bless the unicorn:", err);
+		log("could not bless the unicorn:", err);
 	}
 });
+
+// `worldLoad` only exists on newer script API versions, so it is offered rather
+// than required: present, it is the earliest proof the script is live.
+if (world?.afterEvents?.worldLoad) {
+	subscribe("worldLoad", world.afterEvents.worldLoad, () => {
+		log("world loaded -- the script is live for this world");
+	});
+}
+
+log("boot sequence complete");

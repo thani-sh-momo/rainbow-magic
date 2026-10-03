@@ -3,21 +3,30 @@
  *
  * `scripts/main.js` is loaded exactly as it ships, with this module answering its
  * "@minecraft/server" import, so the tests assert what the add-on *did*
- * (destroyed, dropped, armed, fired) rather than what it logged.
+ * (destroyed, dropped, armed, fired, logged) rather than what it says.
  *
  * Only the surface the add-on touches is implemented. Each engine call is
  * recorded, and the knobs below exist so tests can reproduce the engine's
- * awkward cases: an entity that is already gone, a query that throws.
+ * awkward cases: an entity that is already gone, a query that throws, and an
+ * engine whose script API is missing an event entirely.
  */
 
+/** Every event the add-on asks for. A name in `state.missingEvents` is absent
+ * from `world.afterEvents`, which is how an older script API looks. */
+const EVENT_NAMES = [
+	"entityHitBlock",
+	"entitySpawn",
+	"itemUse",
+	"playerInteractWithBlock",
+	"playerInteractWithEntity",
+	"worldLoad",
+];
+
 export const state = {
-	handlers: {
-		entityHitBlock: [],
-		entitySpawn: [],
-		itemUse: [],
-		playerInteractWithBlock: [],
-		playerInteractWithEntity: [],
-	},
+	/** name -> handlers registered via `world.afterEvents.<name>.subscribe` */
+	handlers: {},
+	/** Event names this engine does not have */
+	missingEvents: [],
 	/** Blocks the add-on destroyed, as "dimension x,y,z typeId" */
 	broken: [],
 	/** { item, amount, dimensionId, location } */
@@ -32,6 +41,8 @@ export const state = {
 	actionBars: [],
 	/** Mobs placed in the world for getEntities to find */
 	mobs: [],
+	/** What getAllPlayers() returns */
+	players: [],
 	/** { ticks, fn } -- the add-on's intervals, run by the tests */
 	intervals: [],
 	currentTick: 0,
@@ -40,13 +51,8 @@ export const state = {
 };
 
 export function reset() {
-	state.handlers = {
-		entityHitBlock: [],
-		entitySpawn: [],
-		itemUse: [],
-		playerInteractWithBlock: [],
-		playerInteractWithEntity: [],
-	};
+	state.handlers = {};
+	state.missingEvents = [];
 	state.broken = [];
 	state.itemsSpawned = [];
 	state.sounds = [];
@@ -56,6 +62,7 @@ export function reset() {
 	state.setOnFire = [];
 	state.actionBars = [];
 	state.mobs = [];
+	state.players = [];
 	state.intervals = [];
 	state.currentTick = 0;
 	state.entityQueryFails = false;
@@ -97,19 +104,28 @@ export const system = {
 	runInterval: (fn, ticks) => state.intervals.push({ fn, ticks }),
 };
 
+/** Built per access, so a test can hide an event before the add-on is loaded. */
+function afterEvents() {
+	const events = {};
+	for (const name of EVENT_NAMES) {
+		if (state.missingEvents.includes(name)) {
+			continue;
+		}
+		events[name] = {
+			subscribe: (handler) => {
+				(state.handlers[name] ??= []).push(handler);
+			},
+		};
+	}
+	return events;
+}
+
 export const world = {
-	afterEvents: {
-		entityHitBlock: { subscribe: (fn) => state.handlers.entityHitBlock.push(fn) },
-		entitySpawn: { subscribe: (fn) => state.handlers.entitySpawn.push(fn) },
-		itemUse: { subscribe: (fn) => state.handlers.itemUse.push(fn) },
-		playerInteractWithBlock: {
-			subscribe: (fn) => state.handlers.playerInteractWithBlock.push(fn),
-		},
-		playerInteractWithEntity: {
-			subscribe: (fn) => state.handlers.playerInteractWithEntity.push(fn),
-		},
+	get afterEvents() {
+		return afterEvents();
 	},
 	getDimension: (id) => dimension(id),
+	getAllPlayers: () => state.players,
 };
 
 let nextEntityId = 1;
@@ -207,7 +223,7 @@ export function entity({
 
 /** A player is an entity whose type id is the engine's player id. */
 export function player(options = {}) {
-	return entity({ typeId: "minecraft:player", isPlayer: true, ...options });
+	return entity({ typeId: "minecraft:player", ...options });
 }
 
 /** A block in the world, with the fields the add-on reads. */
@@ -233,34 +249,34 @@ export function placeMobs(mobs) {
  * raising the events the add-on subscribes to
  * ------------------------------------------------------------------ */
 
-export function swingAt(entity, block) {
-	for (const handler of state.handlers.entityHitBlock) {
-		handler({ damagingEntity: entity, hitBlock: block });
+function raise(name, event) {
+	for (const handler of state.handlers[name] ?? []) {
+		handler(event);
 	}
+}
+
+export function swingAt(entity, block) {
+	raise("entityHitBlock", { damagingEntity: entity, hitBlock: block });
 }
 
 export function interactWithEntity(playerEntity, target) {
-	for (const handler of state.handlers.playerInteractWithEntity) {
-		handler({ player: playerEntity, target });
-	}
+	raise("playerInteractWithEntity", { player: playerEntity, target });
 }
 
 export function interactWithBlock(playerEntity, block) {
-	for (const handler of state.handlers.playerInteractWithBlock) {
-		handler({ player: playerEntity, block });
-	}
+	raise("playerInteractWithBlock", { player: playerEntity, block });
 }
 
 export function useItem(entity, itemStack) {
-	for (const handler of state.handlers.itemUse) {
-		handler({ source: entity, itemStack });
-	}
+	raise("itemUse", { source: entity, itemStack });
 }
 
 export function raiseSpawn(entityToSpawn) {
-	for (const handler of state.handlers.entitySpawn) {
-		handler({ entity: entityToSpawn });
-	}
+	raise("entitySpawn", { entity: entityToSpawn });
+}
+
+export function raiseWorldLoad() {
+	raise("worldLoad", {});
 }
 
 /** Runs every registered interval once, as the engine's tick loop would. */

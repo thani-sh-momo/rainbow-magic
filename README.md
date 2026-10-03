@@ -141,7 +141,7 @@ the resource pack holds the textures. There is no script API toggle to flip, and
 
    ```json
    [
-     { "pack_id": "bc2a68d1-58da-4029-b56d-82538d854be0", "version": [1, 0, 0] }
+     { "pack_id": "bc2a68d1-58da-4029-b56d-82538d854be0", "version": [1, 0, 2] }
    ]
    ```
 
@@ -208,6 +208,63 @@ no static check can reach. Worth a look on first launch —
 - the unicorn's model and taming, and whether the crafted spawn egg links to it
   the way a vanilla egg does (the creative-menu egg is the fallback),
 - the particle and sound ids the traps use.
+
+## If it will not load
+
+The script module logs its own progress, because the failure it guards against
+is invisible: **a script that throws while loading takes the pack down and says
+nothing at all** — no content-log entry, no error, just a pack that will not
+load. Everything below is one line in the content log per stage.
+
+**Turn the content log on first**, or there is nothing to read:
+
+- *Dedicated server:* add `content-log-file-enabled=true` to `server.properties`
+  and restart. The log is written to the server root.
+- *Client:* Settings → Creator → **Content Log GUI** (and enable the content log
+  in the same section).
+
+Then look for lines starting `[RainbowMagic]`. A healthy load looks like this:
+
+```text
+[RainbowMagic] build 1.0.2: script module loaded
+[RainbowMagic] afterEvents: entityHitBlock=ok entitySpawn=ok itemUse=ok ...
+[RainbowMagic] currentTick=0
+[RainbowMagic] overworld=minecraft:overworld
+[RainbowMagic] players=0
+[RainbowMagic] subscribed: entityHitBlock
+... one line per subscription ...
+[RainbowMagic] subscribed: interval every 10 ticks
+[RainbowMagic] boot sequence complete
+[RainbowMagic] alive in the world at tick 10, players=1
+```
+
+Read it like this:
+
+| What you see | What it means |
+| --- | --- |
+| **No `[RainbowMagic]` line at all** | The script module never ran. The problem is the manifest, the script module entry, or the `@minecraft/server` version — not the items, blocks or textures. Try the diagnostic build below. |
+| `build …` but no `boot sequence complete` | Something threw during setup; the line above it names what. |
+| `cannot subscribe to <event>` | This engine's script API has no such event, so that feature is off. The rest still runs. |
+| `<name> handler threw:` | A named handler failed at runtime, with the error and stack. |
+| Boot lines but **no** `alive in the world` | The script loaded but its tick loop never ran. |
+
+### Bisecting with the no-script build
+
+`rainbow-magic-diagnostic-no-script.mcaddon` (in `dist/`, and attached to the
+release) is the same pack with the script module removed from the manifest — and
+its own pack uuid, so it can sit beside the real one. Import it and try again:
+
+- **It loads** → every item, block, recipe, ore, texture and the entity are
+  fine, and the failure is the script module or the `@minecraft/server` version
+  the manifest asks for.
+- **It does not load either** → the problem is in the pack's data, assets or
+  manifest, and the script is not involved.
+
+### After changing a pack
+
+Minecraft matches a pack by uuid **and version**, so bump the version (this file
+documents `1.0.2`) or the world may keep using the copy it already has. If a
+pack misbehaves after an update, try removing it from the world and re-adding it.
 
 ## Contributing
 
